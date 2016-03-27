@@ -1,0 +1,102 @@
+#!/usr/bin/bash
+
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <eric@obarun.org> wrote this file.  As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you think
+# this stuff is worth it, you can buy me a beer in return.   Eric Vidal
+
+. /etc/runit/svopts/svopts.conf
+
+##		Shell color 
+
+bold=$(tput bold)
+reset=$(tput sgr0)
+red=$(tput setaf 1)
+bred=${bold}$(tput setaf 1)
+green=$(tput setaf 2)
+bgreen=${bold}$(tput setaf 2)
+yellow=$(tput setaf 3)
+byellow=${bold}$(tput setaf 3)
+blue=$(tput setaf 4)
+bblue=${bold}$(tput setaf 4)
+
+
+## 		Information display by the script 
+
+echo_bold(){
+	echo "${bold}${1}${reset}"
+}
+echo_info(){
+	echo "${byellow}==>>${1}${reset}"
+}
+echo_info_menu(){
+	echo "${byellow}${1}${reset}"
+}
+echo_retry(){
+	echo "${bblue}==>>${1}${reset}"
+}
+echo_valid(){
+	echo "${bgreen}    ->${1}${reset}"
+}
+echo_notvalid(){
+	echo "${byellow}    ->${1}${reset}"
+}
+echo_display(){
+	echo "${bold}==>>${1}${reset}"
+}
+answer(){
+	echo_retry " Please answer y or n :"
+}
+
+find_origin(){
+	local rc
+	while read -d "," check;do
+		echo_bold " Check $check package"
+		while read ori; do
+			ori=${ori##*/}
+			ori=${ori%%' '*}
+			ori=${ori%-nosystemd}
+			case $ori in
+				"$check") echo_valid " $check come from obarun"
+						unset rc
+						break;;
+				   "not") echo_notvalid " $check doesn't come from obarun repository"
+						unset rc
+						break;;
+					   *)rc=1
+					    continue;;
+			esac	
+		done < <(yaourt -Qs "$check" | fgrep "obarun" || echo "not")
+		
+		if [[ $rc == 1 ]]; then 
+			echo_notvalid " $check doesn't come from obarun repository"
+			unset rc
+		fi
+		
+	done <<< "${both[@]}"
+}
+
+check_package(){
+	
+	local name item
+	local -a both
+	local -a installed obarun_db
+	# list package installed
+	mapfile -t installed < <(pacman -Qsq)
+	# list package from obarun repo
+	mapfile -t obarun_db < <(pacman -Slq obarun)
+	
+	# check if package installed is present on obarun repo
+	# then make a list with it
+	
+	while read name;do 
+		for item in "${obarun_db[@]%-nosystemd}"; do
+			if  [[ "$name" == "$item" ]]; then 
+				both+=("$item,")
+			fi
+		done
+	done < <(pacman -Qsq | sed 's:-nosystemd::')
+	
+	# check origin of the package
+	find_origin
+}

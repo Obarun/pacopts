@@ -1,0 +1,20 @@
+This scripts check the source of all installed package and tell you if a package installed (with the same name) do not come from obarun repo.
+
+License
+=======
+
+This script is under license BEER-WARE
+"THE BEER-WARE LICENSE" (Revision 42):
+<eric@obarun.org> wrote this file.  As long as you retain this notice you
+can do whatever you want with this stuff. If we meet some day, and you think
+this stuff is worth it, you can buy me a beer in return.   Eric Vidal
+
+
+Other words
+===========
+
+Please if you like it or find a bugs or need more information, give a feedback on :
+
+http://obarun.org/forum
+
+enjoy it :)
