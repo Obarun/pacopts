@@ -128,7 +128,8 @@ check_package(){
 		done
 	fi
 	
-	# Remove those line if you want to install packages directly
+	# Remove those following line if you want to install packages directly
+	# don't forget to use sudo :)
 	
 	#for i in "${false[@]}"; do
 	#	pacman -S obarun/$i
