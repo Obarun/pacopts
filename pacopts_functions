@@ -7,12 +7,12 @@
 shopt -s extglob
 #set -e
 
-#. /opt/pacopts/pacopts.conf
-#. /opt/pacopts/pacopts_functions
+#. /etc/pacopts/pacopts.conf
+
 
 ##		Shell color 
 
-unset bold reset red bred green bgreen yellow byellow blue bblue
+
 bold=$(tput bold)
 reset=$(tput sgr0)
 red=$(tput setaf 1)
@@ -23,7 +23,7 @@ yellow=$(tput setaf 3)
 byellow=${bold}$(tput setaf 3)
 blue=$(tput setaf 4)
 bblue=${bold}$(tput setaf 4)
-readonly bold reset red bred green bgreen yellow byellow blue bblue4
+
 
 
 ## 		Information display by the script 
@@ -31,38 +31,405 @@ readonly bold reset red bred green bgreen yellow byellow blue bblue4
 echo_bold(){
 	local msg=$1; shift 
 	printf "${bold}${msg}${reset}\n" "${@}" >&1
+	unset msg
 }
 echo_info(){
 	local msg=$1; shift 
 	printf "${byellow}==>>${msg} ${reset}\n" "${@}" >&1
+	unset msg
 }
 echo_info_menu(){
 	local msg=$1; shift 
 	printf "${byellow}${msg} ${reset}\n" "${@}" >&1
+	unset msg
 }
 echo_retry(){
 	local msg=$1; shift 
 	printf "${bblue}==>>${msg} ${reset}\n" "${@}" >&1
+	unset msg
 }
 echo_valid(){
 	local msg=$1; shift 
 	printf "${bgreen}    ->${msg} ${reset}\n" "${@}" >&1
+	unset msg
 }
 echo_notvalid(){
 	local msg=$1; shift 
 	printf "${byellow}    ->${msg} ${reset}\n" "${@}" >&1
+	unset msg
 }
 echo_display(){
 	local msg=$1; shift 
 	printf "${bold}==>>${msg} ${reset}\n" "${@}" >&1
+	unset msg
 }
 echo_error(){
 	local msg=$1; shift 
 	printf "${bred}    ->${msg} ${reset}\n" "${@}" >&2
+	unset msg
 }
 answer(){
 	echo_retry " Please answer y or n :"
 }
 
+##		define some variables
+sys_path="/usr/lib/sysusers.d"
 
-## empty here :).
+## 		common functions
+
+die (){
+      local message 
+      message="$1"
+ 
+      if [[ -n "$message" ]] ; then
+        echo "${bred}==>> Error: ${message}${reset}"
+      else
+        echo "${bred}==>> Error: Script can not continue"
+      fi
+      exit 1
+}
+
+usage(){
+	cat << EOF
+	
+${bold}Usage: ${0} [options] [sysusers file name]${reset}
+
+General options:
+	origin : check origin of packages
+	applysys : wrap up a sysusers file 
+EOF
+	exit 0
+}
+
+
+die (){
+      local message 
+      message="$1"
+ 
+      if [[ -n "$message" ]] ; then
+        echo "${bred}==>> Error: ${message}${reset}"
+      else
+        echo "${bred}==>> Error: Script can not continue"
+      fi
+      exit 1
+}
+
+##		Reply functions
+## return rc=0 for yes
+## return rc=1 for no
+reply_answer(){
+	local reply
+	read reply
+	while [[ ! "$reply" = @(y|n) ]]; do
+		answer
+		read reply
+	done
+	if [ "$reply" == "y" ]; then
+		rc=0
+	else
+		rc=1
+	fi	
+}
+
+##			ORIGIN FUNCTIONS
+
+find_origin(){
+	local rc ori not check
+	
+	while read -d "," check;do
+		printf "\r${bold}	-> Check %s package${reset}                                " "$check"
+	
+		while read ori; do
+		# parse ori
+			ori=${ori##*/}
+			ori=${ori%%' '*}
+			ori=${ori%-nosystemd}
+			case $ori in
+				"$check") #echo_valid " $check come from obarun"
+						unset rc
+						break;;
+				   "not") #echo_notvalid " $check doesn't come from obarun repository"
+						unset rc
+						false+=("$check")
+						break;;
+					   *)rc=1
+					    continue;;
+			esac
+				
+		done < <(yaourt -Qs "$check" | fgrep "obarun" || echo "not")
+		if [[ $rc == 1 ]]; then 
+			#echo_notvalid " $check doesn't come from obarun repository"
+			unset rc
+			false+=("$check")
+		fi
+	done <<< "${both[@]}"
+	printf "\n${bold}==>> Finished ${reset}\n"
+	
+	unset ori not check rc
+}
+
+
+check_package(){
+	
+	local name item no
+	local -a both false
+	local -a installed obarun_db
+	mapfile -t installed < <(pacman -Qsq)
+	mapfile -t obarun_db < <(pacman -Slq obarun)
+	
+	# FILTER : Compare list of installed package and obarun database,
+	# if exist on twice put it on both table
+		
+	while read name;do 
+		for item in "${obarun_db[@]%-nosystemd}"; do
+			if  [[ "$name" == "$item" ]]; then 
+				both+=("$item,")
+			fi
+		done
+	done < <(pacman -Qsq | sed 's:-nosystemd::')
+	
+	echo_display " Verifying packages repository"
+	
+	#check origin of package
+	find_origin
+	
+	if ! [[ -z "${false[@]}" ]]; then 
+		printf "${byellow}==>> These/those package(s) do not come from obarun repository :${reset}\n" 
+		for no in "${false[@]}"; do
+			echo_bold "	-> $no"
+		done
+		echo_display " Do you want to replace this/those package(s) [y|n]"
+		reply_answer
+		if (( ! "$rc" )); then
+			unset rc
+			for i in "${false[@]}"; do
+				pacman -S obarun/$i
+			done
+		fi
+	fi
+	
+	unset name item no both false installed obarun_db rc
+}
+
+
+
+##				SYSUSERS FUNCTION
+
+# ${1} path to the file
+# ${2} file/list to parse
+parse_file(){
+	local check path_file named parse_check
+	path_file="${1}"
+	named="${2}"
+	
+	while read check; do
+		while read -d " " parse_check;do 
+			case $parse_check in 
+				u|g|m|r)
+					parse_line "${parse_check}" "${check} "
+					;;
+				*) continue ;;
+			esac
+		done <<< "${check}"
+	done < "${path_file}/${named}"
+
+	unset check path_file named parse_check
+}
+
+# {1} sysusers options : mean u,g,m or r
+# {2} complete line to parse
+parse_line(){
+	 
+	opts="${1}"
+	line="${2}"
+	
+	case "${opts}" in
+		u) 	line_u		
+			;;
+		g) 	line_g
+			;;
+		m) 	line_m
+			;;
+		r)	line_r
+			;;
+	esac	
+	
+	
+}
+
+# {1} line to parse
+check_args(){
+	
+	local what element
+	what="${1}"
+
+	while read -d " " element; do
+		case "${element}" in
+			u|g|r) continue 
+					;;
+			m) 	named_g=$(awk -F " " '{print $2 }' <<< ${what})
+				group_g=$(awk -F " " '{print $3 }' <<< ${what})
+				;;	
+			\"*) comment_=$(awk -F "\"*\"" '{ print $2 }' <<< ${what})
+				;;
+			*[0-9])
+				uidgid="${element}"		
+				;;
+			/*)
+				directory_="${element}"
+				;;
+			-) 	continue
+				;;
+			*\") continue
+				;;
+			*[a-z]|*[A-z])
+				echo ${what} | awk -F "${element}" '{ print $1 }' | grep \" &>/dev/null
+				if [[ $? -eq 0 ]]; then
+					continue
+				else
+					named_="${element}"
+				fi
+				;;
+		esac
+	done <<< "${what}"
+	
+	unset what element
+}
+
+line_u(){
+	local named_ directory_ optdirectory_ optdirectory_v uidgid optgid optgid_v optuid optuid_v comment_ optcomment optcomment_v
+
+	check_args "${line}"
+	
+	if [[ -z "${directory_}" ]]; then
+		optdirectory="-d"
+		optdirectory_v="/"
+	else
+		optdirectory="-d"
+		optdirectory_v="${directory_}"
+	fi
+	if [[ -z "${uidgid}" ]]; then
+		optgid=""
+		optgid_v=""
+		optuid=""
+		optuid_v=""
+	else
+		optgid="-g"
+		optgid_v="${uidgid}"
+		optuid="-u" 
+		optuid_v="${uidgid}"
+	fi
+	if [[ -z "${comment_}" ]]; then
+		optcomment=""
+		optcomment_v=""
+	else
+		optcomment="-c" 
+		optcomment_v="${comment_}"
+	fi
+	
+	getent group ${named_} &>/dev/null
+	if [[ $? -eq 0 ]]; then
+		echo_info " group ${named_} already exist, nothing to do"
+	else
+		echo_display " Creating group ${named_} with the option(s):"
+		echo_display " ${optgid} ${optgid_v}" 
+		groupadd -r "${optgid}" "${optgid_v}" "${named_}" || die " Impossible to create group ${named_}"
+	fi
+	
+	getent passwd ${named_} &>/dev/null
+	if [[ $? -eq 0 ]]; then
+		echo_info " user ${named_} already exist, nothing to do"
+	else
+		echo_display " Creating user ${named_} with the option(s):"
+		echo_display " ${optuid} ${optuid_v} ${optgid} ${optgid_v} ${optdirectory} ${optdirectory_v} ${optcomment} ${optcomment_v} -s /sbin/nologin"
+		useradd -r "${optuid}" "${optuid_v}" "${optgid}" "${optgid_v}" "${optdirectory}" "${optdirectory_v}" "${optcomment}" "${optcomment_v}" -s /sbin/nologin "${named_}"	|| die " Impossible to create user ${named_}"
+	fi
+	
+	unset named_ directory_ optdirectory_ optdirectory_v uidgid optgid optgid_v optuid optuid_v comment_ optcomment optcomment_v
+}
+line_g(){
+	local uidgid optgid optgid_v optuid optuid_v named_
+	
+	check_args "${line}"
+	
+	if [[ -z "${uidgid}" ]]; then
+		optgid=""
+		optgid_v=""
+		optuid=""
+		optuid_v=""
+	else
+		optgid="-g"
+		optgid_v="${uidgid}"
+		optuid="-u" 
+		optuid_v="${uidgid}"
+	fi
+	
+	getent group ${named_} &>/dev/null
+	if [[ $? -eq 0 ]]; then
+		echo_info " group ${named_} already exist, nothing to do"
+		break
+	fi
+	
+	echo_display " Creating group ${named_} with the option(s):"
+	echo_display " ${optgid} ${optgid_v}"
+	groupadd -r "${optgid}" "${optgid_v}" "${named_}" || die " Impossible to create group ${named_}"
+	
+	unset uidgid optgid optgid_v optuid optuid_v named_
+}
+
+line_m(){
+	local named_g group_g uidgid optgid optgid_v optuid optuid_v directory_ optdirectory_ optdirectory_v comment_ optcomment optcomment_v
+	
+	check_args "${line}"
+	
+	if [[ -z "${directory_}" ]]; then
+		optdirectory=""
+		optdirectory_v=""
+	else
+		optdirectory="-d"
+		optdirectory_v="${directory_}"
+	fi
+	
+	if [[ -z "${uidgid}" ]]; then
+		optgid=""
+		optgid_v=""
+		optuid=""
+		optuid_v=""
+	else
+		optgid="-g"
+		optgid_v="${uidgid}"
+		optuid="-u" 
+		optuid_v="${uidgid}"
+	fi
+	
+	if [[ -z "${comment_}" ]]; then
+		optcomment=""
+		optcomment_v=""
+	else
+		optcomment="-c" 
+		optcomment_v="${comment_}"
+	fi
+	
+	getent group ${group_g} &>/dev/null
+	if [[ $? -ne 0 ]]; then
+		echo_info " group ${group_g} does not exist, create it"
+		groupadd -r "${optgid}" "${optgid_v}" "${group_g}" || die " Impossible to create group ${group_g}"
+	fi
+	
+	getent passwd ${named_g} &>/dev/null
+	if [[ $? -ne 0 ]]; then
+		echo_info " user ${named_g} does not exist, create it"
+		echo useradd -r "${optuid}" "${optuid_v}" "${optgid}" "${optgid_v}" "${optdirectory}" "${optdirectory_v}" "${optcomment}" "${optcomment_v}" "${named_g}" || die " Impossible to create user ${named_g}"
+	fi
+	
+	echo_display " Add user ${named_g} to group ${group_g}"
+	gpasswd -a "${named_g}" "${group_g}" || die " Impossible to add ${named_g} to group ${group_g}"
+	
+	unset named_g group_g uidgid optgid optgid_v optuid optuid_v directory_ optdirectory_ optdirectory_v comment_ optcomment optcomment_v
+}
+
+line_r(){
+	echo_info " Pacopts cannot parse the file ${path_file}/${named} for r line,"
+	echo_info " you need to do it manually"
+	break
+}
