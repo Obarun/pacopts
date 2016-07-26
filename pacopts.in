@@ -12,7 +12,7 @@ shopt -s extglob
 
 (( EUID == 0 )) || die " You must be run this script with root privileges"
 
-if [ -z "${2}" ] && [ "${1}" != "origin" ]; then
+if [[ -z "${2}" ]] && [[ "${1}" != @(origin|applytmp) ]]; then
 	usage
 	exit 1
 fi

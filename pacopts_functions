@@ -91,11 +91,12 @@ die (){
 usage(){
 	cat << EOF
 	
-${bold}Usage: ${0} [options] [sysusers file name]${reset}
+${bold}Usage: ${0} [options] [sysusers file name] [applytmp]${reset}
 
 General options:
 	origin : check origin of packages
 	applysys : wrap up a sysusers file 
+	applytmp : wrap up all tmpfiles
 EOF
 	exit 0
 }
