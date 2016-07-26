@@ -9,7 +9,6 @@ shopt -s extglob
 
 #. /etc/pacopts/pacopts.conf
 
-
 ##		Shell color 
 
 
@@ -432,4 +431,10 @@ line_r(){
 	echo_info " Pacopts cannot parse the file ${path_file}/${named} for r line,"
 	echo_info " you need to do it manually"
 	break
+}
+
+##				TMPFILE FUNCTION
+
+tmpfiles(){
+	/etc/pacopts/tmpfiles.sh --create
 }

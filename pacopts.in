@@ -25,6 +25,9 @@ case "${1}" in
 	applysys)
 		parse_file "${sys_path}" "${2}"
 		;;
+	applytmp)
+		tmpfiles
+		;;
 	*)
 		usage
 		exit 1
