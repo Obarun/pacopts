@@ -8,5 +8,5 @@ Target = usr/lib/sysusers.d/*.conf
 Description = Updating system user accounts...
 When = PostTransaction
 Depends = pacopts
-Exec = /bin/sh -c 'while read -r f; do /usr/bin/pacopts applysys "/$f" ; done'
+Exec = /bin/sh -c 'for conf in $(ls /usr/lib/sysusers.d/); do /usr/bin/pacopts applysys "$conf" ; done'
 NeedsTargets
