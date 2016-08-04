@@ -1,0 +1,12 @@
+[Trigger]
+Type = File
+Operation = Install
+Operation = Upgrade
+Target = usr/lib/tmpfiles.d/*.conf
+
+[Action]
+Description = Creating temporary files ...
+When = PostTransaction
+Depends = pacopts
+Exec = /usr/lib/obarun/tmpfiles.sh --create
+NeedsTargets
