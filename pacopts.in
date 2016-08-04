@@ -1,13 +1,29 @@
-#!/usr/bin/bash
+#!/bin/bash
 # This script is under license BEER-WARE
 # "THE BEER-WARE LICENSE" (Revision 42):
 # <eric@obarun.org> wrote this file.  As long as you retain this notice you
 # can do whatever you want with this stuff. If we meet some day, and you think
 # this stuff is worth it, you can buy me a beer in return.   Eric Vidal
+
 shopt -s extglob
+
 #set -e
 
-. /etc/pacopts/pacopts_functions
+##		Check is the functions file exits
+
+if [[ -f /usr/lib/obarun/common_functions ]]; then
+	source /usr/lib/obarun/common_functions
+else
+	echo "==>> Missing file : common_functions"
+	exit	
+fi
+
+if [[ -f /usr/lib/obarun/pacopts_functions ]]; then
+	source /usr/lib/obarun/pacopts_functions
+else
+	echo "==>> Missing file : pacopts_functions"
+	exit	
+fi
 
 
 (( EUID == 0 )) || die " You must be run this script with root privileges"

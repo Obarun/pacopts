@@ -1,97 +1,26 @@
-#!/usr/bin/bash
+#!/bin/bash
 # This script is under license BEER-WARE
 # "THE BEER-WARE LICENSE" (Revision 42):
 # <eric@obarun.org> wrote this file.  As long as you retain this notice you
 # can do whatever you want with this stuff. If we meet some day, and you think
 # this stuff is worth it, you can buy me a beer in return.   Eric Vidal
+
 shopt -s extglob
+
 #set -e
 
-#. /etc/pacopts/pacopts.conf
-
-##		Shell color 
-
-
-bold=$(tput bold)
-reset=$(tput sgr0)
-red=$(tput setaf 1)
-bred=${bold}$(tput setaf 1)
-green=$(tput setaf 2)
-bgreen=${bold}$(tput setaf 2)
-yellow=$(tput setaf 3)
-byellow=${bold}$(tput setaf 3)
-blue=$(tput setaf 4)
-bblue=${bold}$(tput setaf 4)
-
-
-
-## 		Information display by the script 
-
-echo_bold(){
-	local msg=$1; shift 
-	printf "${bold}${msg}${reset}\n" "${@}" >&1
-	unset msg
-}
-echo_info(){
-	local msg=$1; shift 
-	printf "${byellow}==>>${msg} ${reset}\n" "${@}" >&1
-	unset msg
-}
-echo_info_menu(){
-	local msg=$1; shift 
-	printf "${byellow}${msg} ${reset}\n" "${@}" >&1
-	unset msg
-}
-echo_retry(){
-	local msg=$1; shift 
-	printf "${bblue}==>>${msg} ${reset}\n" "${@}" >&1
-	unset msg
-}
-echo_valid(){
-	local msg=$1; shift 
-	printf "${bgreen}    ->${msg} ${reset}\n" "${@}" >&1
-	unset msg
-}
-echo_notvalid(){
-	local msg=$1; shift 
-	printf "${byellow}    ->${msg} ${reset}\n" "${@}" >&1
-	unset msg
-}
-echo_display(){
-	local msg=$1; shift 
-	printf "${bold}==>>${msg} ${reset}\n" "${@}" >&1
-	unset msg
-}
-echo_error(){
-	local msg=$1; shift 
-	printf "${bred}    ->${msg} ${reset}\n" "${@}" >&2
-	unset msg
-}
-answer(){
-	echo_retry " Please answer y or n :"
-}
+source /usr/lib/obarun/common_functions
+source /etc/obarun/pacopts.conf
 
 ##		define some variables
-sys_path="/usr/lib/sysusers.d"
+rc=""
 
 ## 		common functions
-
-die (){
-      local message 
-      message="$1"
- 
-      if [[ -n "$message" ]] ; then
-        echo "${bred}==>> Error: ${message}${reset}"
-      else
-        echo "${bred}==>> Error: Script can not continue"
-      fi
-      exit 1
-}
 
 usage(){
 	cat << EOF
 	
-${bold}Usage: ${0} [options] [sysusers file name] [applytmp]${reset}
+${bold}Usage: ${0} [options] [sysusers file name]${reset}
 
 General options:
 	origin : check origin of packages
@@ -99,36 +28,6 @@ General options:
 	applytmp : wrap up all tmpfiles
 EOF
 	exit 0
-}
-
-
-die (){
-      local message 
-      message="$1"
- 
-      if [[ -n "$message" ]] ; then
-        echo "${bred}==>> Error: ${message}${reset}"
-      else
-        echo "${bred}==>> Error: Script can not continue"
-      fi
-      exit 1
-}
-
-##		Reply functions
-## return rc=0 for yes
-## return rc=1 for no
-reply_answer(){
-	local reply
-	read reply
-	while [[ ! "$reply" = @(y|n) ]]; do
-		answer
-		read reply
-	done
-	if [ "$reply" == "y" ]; then
-		rc=0
-	else
-		rc=1
-	fi	
 }
 
 ##			ORIGIN FUNCTIONS
@@ -437,5 +336,5 @@ line_r(){
 ##				TMPFILE FUNCTION
 
 tmpfiles(){
-	/etc/pacopts/tmpfiles.sh --create
+	/usr/lib/obarun/tmpfiles.sh --create
 }
