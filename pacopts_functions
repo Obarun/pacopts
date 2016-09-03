@@ -99,8 +99,7 @@ check_package(){
 		done
 		echo_display " Do you want to replace this/those package(s) [y|n]"
 		reply_answer
-		if (( ! "$rc" )); then
-			unset rc
+		if (( ! $? )); then
 			for i in "${false[@]}"; do
 				pacman -S obarun/$i
 			done
