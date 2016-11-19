@@ -265,7 +265,6 @@ line_g(){
 	getent group ${named_} &>/dev/null
 	if [[ $? -eq 0 ]]; then
 		echo_info " group ${named_} already exist, nothing to do"
-		break
 	fi
 	
 	echo_display " Creating group ${named_} with the option(s):"
