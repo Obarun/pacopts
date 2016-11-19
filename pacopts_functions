@@ -265,11 +265,11 @@ line_g(){
 	getent group ${named_} &>/dev/null
 	if [[ $? -eq 0 ]]; then
 		echo_info " group ${named_} already exist, nothing to do"
+	else	
+		echo_display " Creating group ${named_} with the option(s):"
+		echo_display " ${optgid} ${optgid_v}"
+		groupadd -r "${optgid}" "${optgid_v}" "${named_}" || die " Impossible to create group ${named_}"
 	fi
-	
-	echo_display " Creating group ${named_} with the option(s):"
-	echo_display " ${optgid} ${optgid_v}"
-	groupadd -r "${optgid}" "${optgid_v}" "${named_}" || die " Impossible to create group ${named_}"
 	
 	unset uidgid optgid optgid_v optuid optuid_v named_
 }
