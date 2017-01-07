@@ -5,12 +5,24 @@
 # can do whatever you want with this stuff. If we meet some day, and you think
 # this stuff is worth it, you can buy me a beer in return.   Eric Vidal
 
-shopt -s extglob
+#shopt -s extglob
 
-#set -e
-
-source /usr/lib/obarun/common_functions
-source /etc/obarun/pacopts.conf
+sourcing(){
+	
+	local list
+	
+	for list in /usr/lib/obarun/common_functions /etc/obarun/pacopts.conf; do
+		if [[ -f "${list}" ]]; then
+			source "${list}"
+		else
+			echo_error " Missing file : ${list}"
+			exit	
+		fi
+	done
+	
+	unset list
+}
+#sourcing
 
 ##		define some variables
 rc=""

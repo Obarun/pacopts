@@ -5,26 +5,28 @@
 # can do whatever you want with this stuff. If we meet some day, and you think
 # this stuff is worth it, you can buy me a beer in return.   Eric Vidal
 
-shopt -s extglob
-
-#set -e
 
 ##		Check is the functions file exits
 
-if [[ -f /usr/lib/obarun/common_functions ]]; then
-	source /usr/lib/obarun/common_functions
-else
-	echo "==>> Missing file : common_functions"
-	exit	
-fi
+sourcing(){
+	
+	local list
+	
+	for list in /usr/lib/obarun/{common_functions,pacopts_functions}; do
+		if [[ -f "${list}" ]]; then
+			source "${list}"
+		else
+			echo_error " Missing file : ${list}"
+			exit	
+		fi
+	done
+	
+	unset list
+}
+sourcing
 
-if [[ -f /usr/lib/obarun/pacopts_functions ]]; then
-	source /usr/lib/obarun/pacopts_functions
-else
-	echo "==>> Missing file : pacopts_functions"
-	exit	
-fi
-
+shellopts_save
+shellopts_set_unset "extglob" 0
 
 (( EUID == 0 )) || die " You must be run this script with root privileges"
 
@@ -39,7 +41,7 @@ case "${1}" in
 		check_package
 		;;
 	applysys)
-		parse_file "${sys_path}" "${2}"
+		parse_file "${SYS_PATH}" "${2}"
 		;;
 	applytmp)
 		tmpfiles
@@ -49,5 +51,8 @@ case "${1}" in
 		exit 1
 		;;
 esac
+
+shellopts_restore
+
 exit 0
 
