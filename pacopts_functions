@@ -44,68 +44,102 @@ EOF
 
 ##			ORIGIN FUNCTIONS
 
+# ${1} name of the repos to use
 find_origin(){
-	local rc ori not check
+	local ori check ver repo_origin parse_ori parse_ori_repo parse_ori_name parse_ori_version
 	
-	while read -d "," check;do
-		printf "\r${bold}	-> Check %s package${reset}                                " "$check"
+	repo_origin="${1}"
 	
-		while read ori; do
-		# parse ori
-			ori=${ori##*/}
-			ori=${ori%%' '*}
-			ori=${ori%-nosystemd}
-			case $ori in
-				"$check") #echo_valid " $check come from obarun"
-						unset rc
-						break;;
-				   "not") #echo_notvalid " $check doesn't come from obarun repository"
-						unset rc
-						false+=("$check")
-						break;;
-					   *)rc=1
-					    continue;;
-			esac
+	for check in ${both[@]};do 
+		
+		if [[ "$check" != obarun-@(mkiso|install|build) ]]; then
+		
+			printf "\r${bold}     -> Check %s package${reset}" "$check"
+			tput el #return to the last line
+		
+			while read ori; do
+			
+				parse_ori=${ori}
 				
-		done < <(yaourt -Qs "$check" | fgrep "obarun" || echo "not")
-		if [[ $rc == 1 ]]; then 
-			#echo_notvalid " $check doesn't come from obarun repository"
-			unset rc
-			false+=("$check")
+				#retrieve only the repo
+				parse_ori_repo=${parse_ori%%/*}
+			
+				# retrieve only the name
+				parse_ori_name=${parse_ori##*/}
+				parse_ori_name=${parse_ori_name%%' '*}
+				
+				#retrieve only the version
+				#if the value not return a version format then the package do not come from $repo_origin
+				if [[ "${parse_ori_name}" == "$check" ]]; then ## avoid search regex on packages description
+					parse_ori_version=${parse_ori##*[}
+					ver=$(grep ":" <<< "${parse_ori_version}")
+					
+					if [[ -n "${ver}" ]];then
+						parse_ori_version=${parse_ori_version##*' '}
+						parse_ori_version=${parse_ori_version%%]*}
+					else
+						unset parse_ori_version
+					fi
+					unset ver
+				fi
+				
+				check_var(){
+					printf "\n"
+					echo ori :: ${ori}
+					echo parse_ori :: ${parse_ori}
+					echo parse_ori_repo :: ${parse_ori_repo%%/}
+					echo parse_ori_name :: ${parse_ori_name}
+					echo ver :: ${ver}
+					echo parse_ori_version :: ${parse_ori_version}
+				}
+				#check_var
+				
+				# version is not empty, the package installed do not come from $repo_origin
+				if [[ -n $parse_ori_version ]]; then
+					false+=("$check")
+				fi
+				
+				unset parse_ori parse_ori_repo parse_ori_name parse_ori_version
+			
+			done < <(pacman -Ss "$check" | grep "${repo_origin}")
 		fi
-	done <<< "${both[@]}"
+	done
+	 
 	printf "\n${bold}==>> Finished ${reset}\n"
-	
-	unset ori not check rc
+
+	unset ori check ver repo_origin parse_ori parse_ori_repo parse_ori_name parse_ori_version
 }
 
-
+# ${1} name of the repos to use
+# if empty, obarun is set by default
 check_package(){
 	
-	local name item no
-	local -a both false
-	local -a installed obarun_db
-	mapfile -t installed < <(pacman -Qsq)
-	mapfile -t obarun_db < <(pacman -Slq obarun)
+	local named item repo
+	local -a both false repo_db
 	
-	# FILTER : Compare list of installed package and obarun database,
-	# if exist on twice put it on both table
+	# pick obarun by default
+	repo="${1:-obarun}"
+	
+	mapfile -t repo_db < <(pacman -Slq "${repo}")
+	
+	# FILTER : Compare list of $installed package and $repo database,
+	# if exist on twice put it on $both array
 		
-	while read name;do 
-		for item in "${obarun_db[@]%-nosystemd}"; do
-			if  [[ "$name" == "$item" ]]; then 
-				both+=("$item,")
+	while read named;do 
+		for item in ${repo_db[@]}; do #$(pacman -Slq obarun)
+			if  [[ "$named" == "$item" ]]; then 
+				both+=("$item")
 			fi
 		done
-	done < <(pacman -Qsq | sed 's:-nosystemd::')
+	done < <(pacman -Qsq)
 	
-	echo_display " Verifying packages repository"
+	echo_display " Verifying ${repo} packages repository"
 	
 	#check origin of package
-	find_origin
+	find_origin "${repo}"
 	
 	if ! [[ -z "${false[@]}" ]]; then 
-		printf "${byellow}==>> These/those package(s) do not come from obarun repository :${reset}\n" 
+		printf "${byellow}==>> These/those package(s) do not come from ${repo} repository :${reset}\n" 
 		for no in "${false[@]}"; do
 			echo_bold "	-> $no"
 		done
@@ -113,12 +147,12 @@ check_package(){
 		reply_answer
 		if (( ! $? )); then
 			for i in "${false[@]}"; do
-				pacman -S obarun/$i
+				pacman -S "${repo}"/$i
 			done
 		fi
 	fi
 	
-	unset name item no both false installed obarun_db rc
+	unset named item repo both false repo_db
 }
 
 
