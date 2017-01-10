@@ -32,21 +32,29 @@ usage(){
 	
 ${bold}Usage: ${0} [options] [args]${reset}
 
-General options:
+${bold}options:${reset}
+    
     origin : check origin of packages
     applysys : wrap up a sysusers file 
     applytmp : wrap up all tmpfiles
-
-args :
-    for origin : give the name of the repo to check.
-                 if an empty value is detected,
-                 obarun is picked by default.
-	
-    for applysys : name of the file to parse.
-                   can be a list e.g. "nbd.conf qemu.conf"
+    aur : manage package from AUR repositories
     
-    for applytmp : this option do not accept any args.
-				
+${bold}args :${reset}
+    
+    for origin :
+        give the name of the repo to check.
+        if an empty value is detected,
+        obarun is picked by default.
+	
+    for applysys :
+        name of the file to parse.
+        can be a list e.g. "nbd.conf qemu.conf"
+    
+    for applytmp :
+        this option do not accept any args.
+        
+    for	aur :
+        this option do not accept any args.
 EOF
 	exit 0
 }
@@ -402,3 +410,67 @@ line_r(){
 tmpfiles(){
 	/usr/lib/obarun/tmpfiles.sh --create
 }
+
+
+## 				AUR FUNCTION
+
+# ${1} command to pass to cower
+# ${2} cower arguments to pass
+cower_cmd(){
+	local opts
+	cmd="${1}"
+	opts=( "${2}" )
+	
+	cower "${cmd}" ${opts[@]} || return 1
+	
+	unset opts
+	
+	return 0
+}
+
+# ${1} first pass or not : 0 for not, 1 for yes
+# ${2} cower command or extra command e.g. install
+
+manage_aur(){
+	
+	local cower_cmd _pass
+	_pass="${1}"
+	manage_cmd="${2}"
+	
+	if (( "${_pass}" )); then
+		printf "\n"
+		
+		read -p "Manage :: please enter your command > " ans
+		manage_cmd="${ans}"
+	fi
+	
+	case $manage_cmd in
+			@(d|download))
+				manage_aur_download "download"
+				;;
+			@(i|info))
+				manage_aur_info "info"
+				;;
+			@(m|msearch))
+				manage_aur_msearch "msearch"
+				;;
+			@(s|search))
+				manage_aur_search "search"
+				;;
+			@(u|update))
+				manage_aur_update "update"
+				;;
+			@(in|install))
+				manage_aur_install "install"
+				;;
+			@(b|build))
+				manage_aur_build "build"
+				;;
+			*)
+				usage
+				exit 1
+				;;
+	esac
+}
+
+

@@ -46,6 +46,9 @@ case "${1}" in
 	applytmp)
 		tmpfiles
 		;;
+	aur)
+		manage_aur 1 "${2}"
+		;;
 	*)
 		usage
 		exit 1
