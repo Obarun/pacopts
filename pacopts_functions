@@ -473,4 +473,78 @@ manage_aur(){
 	esac
 }
 
-
+manage_aur_info(){
+	
+	local info named rc
+	local -a parse_ans ans_args ans
+	
+	info="${1}"
+	
+	read -p "Manage ${info} :: please enter a name > " ans 
+	printf "\n"
+	named="${ans}"
+	
+	parse_ans=( "${ans[@]}" )
+	ans_args=( "${parse_ans[@]:1}" )
+	
+	check_var(){
+		echo parse_ans :: "${parse_ans[@]}"
+		echo ans_args :: "${ans_args[@]}"
+	}
+	#check_var
+	
+	cower_cmd "-i" "${named} ${ans_args[@]}" 
+	
+	unset ans
+	
+	while true; do
+		
+		unset named
+		
+		printf "\n"
+		
+		read -p "Manage ${info} :: > " ans
+		
+		named="${ans}"
+		
+		printf "\n"
+		
+		case "${ans}" in
+			@(download|msearch|search|update|install|build)) 
+				rc=1
+				break
+				;;
+			help)
+				echo manage_aur_info_help :: display help for info command
+				;;
+			quit) 
+				exit
+				;;
+			*) cower_cmd "-i" "${named} ${ans_args[@]}"
+				;;
+		esac
+	done
+	if (( $rc )); then
+		manage_aur 0 "${ans}"
+	fi
+	
+	unset info named rc parse_ans ans_args ans
+}
+manage_aur_download(){
+	echo manage_aur_download
+}
+manage_aur_msearch(){
+	echo manage_aur_msearch
+}
+manage_aur_search(){
+	echo manage_aur_search
+}
+manage_aur_update(){
+	echo manage_aur_update
+}
+manage_aur_install(){
+	echo manage_aur_install
+}
+manage_aur_build(){
+	echo manage_aur_build
+}
