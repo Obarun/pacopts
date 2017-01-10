@@ -30,12 +30,23 @@ sourcing(){
 usage(){
 	cat << EOF
 	
-${bold}Usage: ${0} [options] [sysusers file name]${reset}
+${bold}Usage: ${0} [options] [args]${reset}
 
 General options:
 	origin : check origin of packages
 	applysys : wrap up a sysusers file 
 	applytmp : wrap up all tmpfiles
+
+args :
+	for origin :	give the name of the repo to check.
+					if an empty value is detected,
+					obarun is picked by default.
+	
+	for applysys : 	name of the file to parse.
+					can be a list e.g. "nbd.conf qemu.conf"
+					
+	for applytmp :	this option do not accept any args.
+				
 EOF
 	exit 0
 }
