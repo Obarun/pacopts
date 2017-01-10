@@ -24,6 +24,7 @@ sourcing(){
 }
 #sourcing
 
+COWER_CONFIG="$HOME/.config/cower/config"
 
 ## 		common functions
 
@@ -428,10 +429,431 @@ cower_cmd(){
 	return 0
 }
 
+manage_aur_download(){
+	
+	local info named rc
+	local -a parse_ans ans_args ans
+	
+	info="${1}"
+	
+	read -p "Manage ${info} :: enter a name > " ans 
+	printf "\n"
+	named="${ans}"
+	
+	parse_ans=( "${ans[@]}" )
+	ans_args=( "${parse_ans[@]:1}" )
+	
+	check_var(){
+		echo parse_ans :: "${parse_ans[@]}"
+		echo ans_args :: "${ans_args[@]}"
+	}
+	#check_var
+	
+	cower_cmd "-d" "${named} ${ans_args[@]}" 
+	
+	unset ans
+	
+	while true; do
+		
+		unset named
+		
+		printf "\n"
+		
+		read -p "Manage ${info} :: > " ans
+		
+		named="${ans}"
+		
+		printf "\n"
+		
+		case "${ans}" in
+			@(info|msearch|search|update|install|build)) 
+				rc=1
+				break
+				;;
+			help)
+				echo manage_aur_info_help :: display help for info command
+				;;
+			quit) 
+				exit
+				;;
+			*) cower_cmd "-d" "${named} ${ans_args[@]}"
+				;;
+		esac
+	done
+	if (( $rc )); then
+		manage_aur 0 "${ans}"
+	fi
+	
+	unset info named rc parse_ans ans_args ans
+}
+
+manage_aur_info(){
+	
+	local info named rc
+	local -a parse_ans ans_args ans
+	
+	info="${1}"
+	
+	read -p "Manage ${info} :: enter a name > " ans 
+	printf "\n"
+	named="${ans}"
+	
+	parse_ans=( "${ans[@]}" )
+	ans_args=( "${parse_ans[@]:1}" )
+	
+	check_var(){
+		echo parse_ans :: "${parse_ans[@]}"
+		echo ans_args :: "${ans_args[@]}"
+	}
+	#check_var
+	
+	cower_cmd "-i" "${named} ${ans_args[@]}" 
+	
+	unset ans
+	
+	while true; do
+		
+		unset named
+		
+		printf "\n"
+		
+		read -p "Manage ${info} :: > " ans
+		
+		named="${ans}"
+		
+		printf "\n"
+		
+		case "${ans}" in
+			@(download|msearch|search|update|install|build)) 
+				rc=1
+				break
+				;;
+			help)
+				echo manage_aur_info_help :: display help for info command
+				;;
+			quit) 
+				exit
+				;;
+			*) cower_cmd "-i" "${named} ${ans_args[@]}"
+				;;
+		esac
+	done
+	if (( $rc )); then
+		manage_aur 0 "${ans}"
+	fi
+	
+	unset info named rc parse_ans ans_args ans
+}
+
+manage_aur_msearch(){
+	
+	local info named rc
+	local -a parse_ans ans_args ans
+	
+	info="${1}"
+	
+	read -p "Manage ${info} :: enter a maintainer name > " ans 
+	printf "\n"
+	named="${ans}"
+	
+	parse_ans=( "${ans[@]}" )
+	ans_args=( "${parse_ans[@]:1}" )
+	
+	check_var(){
+		echo parse_ans :: "${parse_ans[@]}"
+		echo ans_args :: "${ans_args[@]}"
+	}
+	#check_var
+	
+	cower_cmd "-m" "${named} ${ans_args[@]}" 
+	
+	unset ans
+	
+	while true; do
+		
+		unset named
+		
+		printf "\n"
+		
+		read -p "Manage ${info} :: > " ans
+		
+		named="${ans}"
+		
+		printf "\n"
+		
+		case "${ans}" in
+			@(download|info|search|update|install|build)) 
+				rc=1
+				break
+				;;
+			help)
+				echo manage_aur_info_help :: display help for info command
+				;;
+			quit) 
+				exit
+				;;
+			*) cower_cmd "-m" "${named} ${ans_args[@]}"
+				;;
+		esac
+	done
+	if (( $rc )); then
+		manage_aur 0 "${ans}"
+	fi
+	
+	unset info named rc parse_ans ans_args ans
+}
+manage_aur_search(){
+	
+	local info named rc
+	local -a parse_ans ans_args ans
+	
+	info="${1}"
+	
+	read -p "Manage ${info} :: enter a name > " ans 
+	printf "\n"
+	named="${ans}"
+	
+	parse_ans=( "${ans[@]}" )
+	ans_args=( "${parse_ans[@]:1}" )
+	
+	check_var(){
+		echo parse_ans :: "${parse_ans[@]}"
+		echo ans_args :: "${ans_args[@]}"
+	}
+	#check_var
+	
+	cower_cmd "-s" "${named} ${ans_args[@]}" 
+	
+	unset ans
+	
+	while true; do
+		
+		unset named
+		
+		printf "\n"
+		
+		read -p "Manage ${info} :: > " ans
+		
+		named="${ans}"
+		
+		printf "\n"
+		
+		case "${ans}" in
+			@(download|info|msearch|update|install|build)) 
+				rc=1
+				break
+				;;
+			help)
+				echo manage_aur_info_help :: display help for info command
+				;;
+			quit) 
+				exit
+				;;
+			*) cower_cmd "-s" "${named} ${ans_args[@]}"
+				;;
+		esac
+	done
+	if (( $rc )); then
+		manage_aur 0 "${ans}"
+	fi
+	
+	unset info named rc parse_ans ans_args ans
+}
+manage_aur_update(){
+	
+	local info named rc
+	local -a parse_ans ans_args ans
+	
+	info="${1}"
+	
+	read -p "Manage ${info} :: enter a name or leave blank to see all installed packages > " ans 
+	printf "\n"
+	named="${ans}"
+	
+	parse_ans=( "${ans[@]}" )
+	ans_args=( "${parse_ans[@]:1}" )
+	
+	check_var(){
+		echo parse_ans :: "${parse_ans[@]}"
+		echo ans_args :: "${ans_args[@]}"
+	}
+	#check_var
+	
+	cower_cmd "-u" "${named} ${ans_args[@]}" 
+	
+	unset ans
+	
+	while true; do
+		
+		unset named
+		
+		printf "\n"
+		
+		read -p "Manage ${info} :: > " ans
+		
+		named="${ans}"
+		
+		printf "\n"
+		
+		case "${ans}" in
+			@(download|info|msearch|search|install|build)) 
+				rc=1
+				break
+				;;
+			help)
+				echo manage_aur_info_help :: display help for info command
+				;;
+			quit) 
+				exit
+				;;
+			*) cower_cmd "-u" "${named} ${ans_args[@]}"
+				;;
+		esac
+	done
+	if (( $rc )); then
+		manage_aur 0 "${ans}"
+	fi
+	
+	unset info named rc parse_ans ans_args ans
+}
+
+manage_aur_install(){
+	exit
+	local info named rc
+	local -a parse_ans ans_args ans
+	
+	info="${1}"
+	
+	read -p "Manage ${info} :: enter a name > " ans 
+	printf "\n"
+	named="${ans}"
+	
+	parse_ans=( "${ans[@]}" )
+	ans_args=( "${parse_ans[@]:1}" )
+	
+	check_var(){
+		echo parse_ans :: "${parse_ans[@]}"
+		echo ans_args :: "${ans_args[@]}"
+	}
+	#check_var
+	
+	cower_cmd "-u" "${named} ${ans_args[@]}" 
+	
+	unset ans
+	
+	while true; do
+		
+		unset named
+		
+		printf "\n"
+		
+		read -p "Manage ${info} :: > " ans
+		
+		named="${ans}"
+		
+		printf "\n"
+		
+		case "${ans}" in
+			@(download|info|msearch|search|update|build)) 
+				rc=1
+				break
+				;;
+			help)
+				echo manage_aur_info_help :: display help for info command
+				;;
+			quit) 
+				exit
+				;;
+			*) cower_cmd "-u" "${named} ${ans_args[@]}"
+				;;
+		esac
+	done
+	if (( $rc )); then
+		manage_aur 0 "${ans}"
+	fi
+	
+	unset info named rc parse_ans ans_args ans
+}
+
+manage_aur_build(){
+	exit
+	local info named rc
+	local -a parse_ans ans_args ans
+	
+	info="${1}"
+	
+	read -p "Manage ${info} :: enter a name > " ans 
+	printf "\n"
+	named="${ans}"
+	
+	parse_ans=( "${ans[@]}" )
+	ans_args=( "${parse_ans[@]:1}" )
+	
+	check_var(){
+		echo parse_ans :: "${parse_ans[@]}"
+		echo ans_args :: "${ans_args[@]}"
+	}
+	#check_var
+	
+	cower_cmd "-u" "${named} ${ans_args[@]}" 
+	
+	unset ans
+	
+	while true; do
+		
+		unset named
+		
+		printf "\n"
+		
+		read -p "Manage ${info} :: > " ans
+		
+		named="${ans}"
+		
+		printf "\n"
+		
+		case "${ans}" in
+			@(download|info|msearch|search|update|install)) 
+				rc=1
+				break
+				;;
+			help)
+				echo manage_aur_info_help :: display help for info command
+				;;
+			quit) 
+				exit
+				;;
+			*) cower_cmd "-u" "${named} ${ans_args[@]}"
+				;;
+		esac
+	done
+	if (( $rc )); then
+		manage_aur 0 "${ans}"
+	fi
+	
+	unset info named rc parse_ans ans_args ans
+}
+
+manage_aur_help(){
+	printf "\n"
+	printf "%-15s\n" "The following command are available"
+	printf "\n"
+	printf "%-15s %-15s\n" "     download" "download a pkgbuild for a given package" >&1
+	printf "%-15s %-15s\n" "     info" "get info for a given package" >&1
+	printf "%-15s %-15s\n" "     msearch" "search for packages maintained by a given name" >&1
+	printf "%-15s %-15s\n" "     search" "search for packages with a given name or regex pattern" >&1
+	printf "%-15s %-15s\n" "     update" "check for updates for a given packages" >&1
+}
+
 # ${1} first pass or not : 0 for not, 1 for yes
 # ${2} cower command or extra command e.g. install
 
 manage_aur(){
+	
+	(( EUID != 0 )) || die " this part of the must be run without root privilegies" 
+	
+	if [[ -z "$COWER_CONFIG" ]]; then
+		die " a configuration file for cower need to be present at ${COWER_CONFIG}"
+	fi
 	
 	local cower_cmd _pass
 	_pass="${1}"
@@ -467,8 +889,8 @@ manage_aur(){
 				manage_aur_build "build"
 				;;
 			*)
-				usage
-				exit 1
+				manage_aur_help
+				manage_aur 1
 				;;
 	esac
 }
@@ -529,22 +951,4 @@ manage_aur_info(){
 	fi
 	
 	unset info named rc parse_ans ans_args ans
-}
-manage_aur_download(){
-	echo manage_aur_download
-}
-manage_aur_msearch(){
-	echo manage_aur_msearch
-}
-manage_aur_search(){
-	echo manage_aur_search
-}
-manage_aur_update(){
-	echo manage_aur_update
-}
-manage_aur_install(){
-	echo manage_aur_install
-}
-manage_aur_build(){
-	echo manage_aur_build
 }
