@@ -160,24 +160,35 @@ check_package(){
 ##				SYSUSERS FUNCTION
 
 # ${1} path to the file
-# ${2} file/list to parse
+# ${2} file to parse, can be a list e.g. "nbd.conf quemu.conf"
 parse_file(){
-	local check path_file named parse_check
-	path_file="${1}"
-	named="${2}"
 	
-	while read check; do
-		while read -d " " parse_check;do 
-			case $parse_check in 
-				u|g|m|r)
-					parse_line "${parse_check}" "${check} "
-					;;
-				*) continue ;;
-			esac
-		done <<< "${check}"
-	done < "${path_file}/${named}"
+	local tidy_loop path_file check parse_check
+	local -a named
+	
+	path_file="${1}"
+	named=( "${2}" )
+	
+	for tidy_loop in ${path_file}/${named[@]}; do
+		
+		tidy_loop=${tidy_loop##*/}
 
-	unset check path_file named parse_check
+		while read check; do
+	
+			while read -d " " parse_check;do 
+				case $parse_check in 
+					u|g|m|r)
+						parse_line "${parse_check}" "${check} "
+						;;
+					*) continue ;;
+				esac
+			done <<< "${check}"
+	
+		done < "${path_file}/${tidy_loop}"
+	
+	done 
+	
+	unset named tidy_loop path_file check parse_check
 }
 
 # {1} sysusers options : mean u,g,m or r
