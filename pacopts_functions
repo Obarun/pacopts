@@ -24,8 +24,6 @@ sourcing(){
 }
 #sourcing
 
-##		define some variables
-rc=""
 
 ## 		common functions
 
