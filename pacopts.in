@@ -30,7 +30,7 @@ shellopts_set_unset "extglob" 0
 
 (( EUID == 0 )) || die " You must be run this script with root privileges"
 
-if [[ -z "${2}" ]] && [[ "${1}" != "applytmp" ]]; then
+if [[ -z "${2}" ]] && [[ "${1}" != @(origin|applytmp) ]]; then
 	usage
 	exit 1
 fi
