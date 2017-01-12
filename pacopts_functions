@@ -25,6 +25,8 @@ sourcing(){
 #sourcing
 
 COWER_CONFIG="$HOME/.config/cower/config"
+OPTS_COWER="--color"
+SP="---" # character to use to know if the commandline on manage_aur_* is a list or not
 
 ## 		common functions
 
@@ -415,6 +417,27 @@ tmpfiles(){
 
 ## 				AUR FUNCTION
 
+# ${1} array to parse
+manage_aur_is_array(){
+	
+	local _var
+	local -a _list
+	_array=( ${1} )
+
+	if check_elements "${SP}" ${_array[@]}; then
+		parse_ans=${ans[@]}
+		named=${ans[@]}
+		named=${named%%---*}
+		ans_args=${parse_ans##*---}
+		rc=0
+	else
+		parse_ans=${ans[@]}
+		named=${parse_ans%%' '*}
+		ans_args=${parse_ans##*' '}
+		rc=1
+	fi
+}
+
 # ${1} command to pass to cower
 # ${2} cower arguments to pass
 cower_cmd(){
@@ -438,20 +461,21 @@ manage_aur_download(){
 	
 	read -p "Manage ${info} :: enter a name > " ans 
 	printf "\n"
-	named="${ans}"
 	
-	parse_ans=( "${ans[@]}" )
-	ans_args=( "${parse_ans[@]:1}" )
+	manage_aur_is_array "${ans[@]}" 
 	
-	check_var(){
-		echo parse_ans :: "${parse_ans[@]}"
-		echo ans_args :: "${ans_args[@]}"
-	}
-	#check_var
-	
-	cower_cmd "-d" "${named} ${ans_args[@]}" 
-	
-	unset ans
+	if (( ! "$rc" )); then
+		for tidy_loop in ${named[@]}; do
+			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+			printf "\n"
+			cower_cmd "-d" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+			printf "\n"
+		done
+	else
+		cower_cmd "-d" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
+	fi
+
+	unset ans rc
 	
 	while true; do
 		
@@ -471,12 +495,24 @@ manage_aur_download(){
 				break
 				;;
 			help)
-				echo manage_aur_info_help :: display help for info command
+				cower_cmd "-h"
 				;;
 			quit) 
 				exit
 				;;
-			*) cower_cmd "-d" "${named} ${ans_args[@]}"
+			*) 	manage_aur_is_array "${ans[@]}"
+				
+				if (( ! "$rc" )); then
+					for tidy_loop in ${named[@]}; do
+						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+						printf "\n"
+						cower_cmd "-d" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+						printf "\n"
+					done
+				else
+					cower_cmd "-d" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+				fi
+				unset rc
 				;;
 		esac
 	done
@@ -484,7 +520,7 @@ manage_aur_download(){
 		manage_aur 0 "${ans}"
 	fi
 	
-	unset info named rc parse_ans ans_args ans
+	unset info named rc parse_ans ans_args ans tidy_loop
 }
 
 manage_aur_info(){
@@ -496,20 +532,21 @@ manage_aur_info(){
 	
 	read -p "Manage ${info} :: enter a name > " ans 
 	printf "\n"
-	named="${ans}"
 	
-	parse_ans=( "${ans[@]}" )
-	ans_args=( "${parse_ans[@]:1}" )
+	manage_aur_is_array "${ans[@]}" 
 	
-	check_var(){
-		echo parse_ans :: "${parse_ans[@]}"
-		echo ans_args :: "${ans_args[@]}"
-	}
-	#check_var
-	
-	cower_cmd "-i" "${named} ${ans_args[@]}" 
-	
-	unset ans
+	if (( ! "$rc" )); then
+		for tidy_loop in ${named[@]}; do
+			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+			printf "\n"
+			cower_cmd "-i" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+			printf "\n"
+		done
+	else
+		cower_cmd "-i" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
+	fi
+
+	unset ans rc
 	
 	while true; do
 		
@@ -529,12 +566,24 @@ manage_aur_info(){
 				break
 				;;
 			help)
-				echo manage_aur_info_help :: display help for info command
+				cower_cmd "-h"
 				;;
 			quit) 
 				exit
 				;;
-			*) cower_cmd "-i" "${named} ${ans_args[@]}"
+			*) 	manage_aur_is_array "${ans[@]}"
+				
+				if (( ! "$rc" )); then
+					for tidy_loop in ${named[@]}; do
+						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+						printf "\n"
+						cower_cmd "-i" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+						printf "\n"
+					done
+				else
+					cower_cmd "-i" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+				fi
+				unset rc
 				;;
 		esac
 	done
@@ -542,7 +591,7 @@ manage_aur_info(){
 		manage_aur 0 "${ans}"
 	fi
 	
-	unset info named rc parse_ans ans_args ans
+	unset info named rc parse_ans ans_args ans tidy_loop
 }
 
 manage_aur_msearch(){
@@ -551,23 +600,24 @@ manage_aur_msearch(){
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-	
+		
 	read -p "Manage ${info} :: enter a maintainer name > " ans 
 	printf "\n"
-	named="${ans}"
 	
-	parse_ans=( "${ans[@]}" )
-	ans_args=( "${parse_ans[@]:1}" )
+	manage_aur_is_array "${ans[@]}" 
 	
-	check_var(){
-		echo parse_ans :: "${parse_ans[@]}"
-		echo ans_args :: "${ans_args[@]}"
-	}
-	#check_var
-	
-	cower_cmd "-m" "${named} ${ans_args[@]}" 
-	
-	unset ans
+	if (( ! "$rc" )); then
+		for tidy_loop in ${named[@]}; do
+			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+			printf "\n"
+			cower_cmd "-m" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+			printf "\n"
+		done
+	else
+		cower_cmd "-m" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
+	fi
+
+	unset ans rc
 	
 	while true; do
 		
@@ -587,12 +637,24 @@ manage_aur_msearch(){
 				break
 				;;
 			help)
-				echo manage_aur_info_help :: display help for info command
+				cower_cmd "-h"
 				;;
 			quit) 
 				exit
 				;;
-			*) cower_cmd "-m" "${named} ${ans_args[@]}"
+			*) 	manage_aur_is_array "${ans[@]}"
+				
+				if (( ! "$rc" )); then
+					for tidy_loop in ${named[@]}; do
+						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+						printf "\n"
+						cower_cmd "-m" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+						printf "\n"
+					done
+				else
+					cower_cmd "-m" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+				fi
+				unset rc
 				;;
 		esac
 	done
@@ -600,8 +662,9 @@ manage_aur_msearch(){
 		manage_aur 0 "${ans}"
 	fi
 	
-	unset info named rc parse_ans ans_args ans
+	unset info named rc parse_ans ans_args ans tidy_loop
 }
+
 manage_aur_search(){
 	
 	local info named rc
@@ -611,20 +674,21 @@ manage_aur_search(){
 	
 	read -p "Manage ${info} :: enter a name > " ans 
 	printf "\n"
-	named="${ans}"
 	
-	parse_ans=( "${ans[@]}" )
-	ans_args=( "${parse_ans[@]:1}" )
+	manage_aur_is_array "${ans[@]}" 
 	
-	check_var(){
-		echo parse_ans :: "${parse_ans[@]}"
-		echo ans_args :: "${ans_args[@]}"
-	}
-	#check_var
-	
-	cower_cmd "-s" "${named} ${ans_args[@]}" 
-	
-	unset ans
+	if (( ! "$rc" )); then
+		for tidy_loop in ${named[@]}; do
+			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+			printf "\n"
+			cower_cmd "-s" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+			printf "\n"
+		done
+	else
+		cower_cmd "-s" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
+	fi
+
+	unset ans rc
 	
 	while true; do
 		
@@ -644,12 +708,24 @@ manage_aur_search(){
 				break
 				;;
 			help)
-				echo manage_aur_info_help :: display help for info command
+				cower_cmd "-h"
 				;;
 			quit) 
 				exit
 				;;
-			*) cower_cmd "-s" "${named} ${ans_args[@]}"
+			*) 	manage_aur_is_array "${ans[@]}"
+				
+				if (( ! "$rc" )); then
+					for tidy_loop in ${named[@]}; do
+						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+						printf "\n"
+						cower_cmd "-s" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+						printf "\n"
+					done
+				else
+					cower_cmd "-s" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+				fi
+				unset rc
 				;;
 		esac
 	done
@@ -657,31 +733,33 @@ manage_aur_search(){
 		manage_aur 0 "${ans}"
 	fi
 	
-	unset info named rc parse_ans ans_args ans
+	unset info named rc parse_ans ans_args ans tidy_loop
 }
+
 manage_aur_update(){
 	
-	local info named rc
+	local info named rc sp
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
 	
 	read -p "Manage ${info} :: enter a name or leave blank to see all installed packages > " ans 
 	printf "\n"
-	named="${ans}"
 	
-	parse_ans=( "${ans[@]}" )
-	ans_args=( "${parse_ans[@]:1}" )
+	manage_aur_is_array "${ans[@]}" 
 	
-	check_var(){
-		echo parse_ans :: "${parse_ans[@]}"
-		echo ans_args :: "${ans_args[@]}"
-	}
-	#check_var
-	
-	cower_cmd "-u" "${named} ${ans_args[@]}" 
-	
-	unset ans
+	if (( ! "$rc" )); then
+		for tidy_loop in ${named[@]}; do
+			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+			printf "\n"
+			cower_cmd "-u" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+			printf "\n"
+		done
+	else
+		cower_cmd "-u" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
+	fi
+
+	unset ans rc
 	
 	while true; do
 		
@@ -701,12 +779,24 @@ manage_aur_update(){
 				break
 				;;
 			help)
-				echo manage_aur_info_help :: display help for info command
+				cower_cmd "-h"
 				;;
 			quit) 
 				exit
 				;;
-			*) cower_cmd "-u" "${named} ${ans_args[@]}"
+			*) 	manage_aur_is_array "${ans[@]}"
+				
+				if (( ! "$rc" )); then
+					for tidy_loop in ${named[@]}; do
+						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+						printf "\n"
+						cower_cmd "-u" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+						printf "\n"
+					done
+				else
+					cower_cmd "-u" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+				fi
+				unset rc
 				;;
 		esac
 	done
@@ -714,7 +804,7 @@ manage_aur_update(){
 		manage_aur 0 "${ans}"
 	fi
 	
-	unset info named rc parse_ans ans_args ans
+	unset info named rc parse_ans ans_args ans tidy_loop
 }
 
 manage_aur_install(){
@@ -842,6 +932,13 @@ manage_aur_help(){
 	printf "%-15s %-15s\n" "     msearch" "search for packages maintained by a given name" >&1
 	printf "%-15s %-15s\n" "     search" "search for packages with a given name or regex pattern" >&1
 	printf "%-15s %-15s\n" "     update" "check for updates for a given packages" >&1
+	printf "%-15s %-15s\n" "     quit" "exit from the script" >&1
+}
+
+manage_aur_install_help(){
+	printf "\n"
+	printf "%-15s\n" "help for install command"
+	printf "\n"
 }
 
 # ${1} first pass or not : 0 for not, 1 for yes
@@ -851,10 +948,10 @@ manage_aur(){
 	
 	(( EUID != 0 )) || die " this part of the must be run without root privilegies" 
 	
-	if [[ -z "$COWER_CONFIG" ]]; then
+	if [[ -z "${COWER_CONFIG}" ]]; then
 		die " a configuration file for cower need to be present at ${COWER_CONFIG}"
 	fi
-	
+		
 	local cower_cmd _pass
 	_pass="${1}"
 	manage_cmd="${2}"
@@ -888,67 +985,12 @@ manage_aur(){
 			@(b|build))
 				manage_aur_build "build"
 				;;
+			quit)
+				exit
+				;;
 			*)
 				manage_aur_help
 				manage_aur 1
 				;;
 	esac
-}
-
-manage_aur_info(){
-	
-	local info named rc
-	local -a parse_ans ans_args ans
-	
-	info="${1}"
-	
-	read -p "Manage ${info} :: please enter a name > " ans 
-	printf "\n"
-	named="${ans}"
-	
-	parse_ans=( "${ans[@]}" )
-	ans_args=( "${parse_ans[@]:1}" )
-	
-	check_var(){
-		echo parse_ans :: "${parse_ans[@]}"
-		echo ans_args :: "${ans_args[@]}"
-	}
-	#check_var
-	
-	cower_cmd "-i" "${named} ${ans_args[@]}" 
-	
-	unset ans
-	
-	while true; do
-		
-		unset named
-		
-		printf "\n"
-		
-		read -p "Manage ${info} :: > " ans
-		
-		named="${ans}"
-		
-		printf "\n"
-		
-		case "${ans}" in
-			@(download|msearch|search|update|install|build)) 
-				rc=1
-				break
-				;;
-			help)
-				echo manage_aur_info_help :: display help for info command
-				;;
-			quit) 
-				exit
-				;;
-			*) cower_cmd "-i" "${named} ${ans_args[@]}"
-				;;
-		esac
-	done
-	if (( $rc )); then
-		manage_aur 0 "${ans}"
-	fi
-	
-	unset info named rc parse_ans ans_args ans
 }
