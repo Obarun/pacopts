@@ -417,11 +417,45 @@ tmpfiles(){
 
 ## 				AUR FUNCTION
 
+# function to find which installer to use for a given package
+# return 10 for pacman, 11 for AUR helper
+# ${1} name of package
+choose_installer(){
+	
+	local b named
+		
+	named="${1}"
+		
+	for b in $(pacman -Ssq ${named[@]}); do
+		if [[ $named =~ $b ]] ; then
+			return 10			
+		fi
+	done
+	unset b
+	
+	for b in $(cower -sq ${named[@]}); do
+		if [[ $named =~ $b ]] ; then
+			return 11			
+		fi
+	done
+	unset b
+	
+	# be sure the named are not a group
+	# if it's the case return value for pacman
+	
+	for b in $(pacman -Sgq ${named[@]}); do
+		if [[ $named =~ $b ]] ; then
+			return 10			
+		fi
+	done
+		
+	unset named b
+}
+
 # ${1} array to parse
 manage_aur_is_array(){
 	
-	local _var
-	local -a _list
+	local -a _array
 	_array=( ${1} )
 
 	if check_elements "${SP}" ${_array[@]}; then
@@ -429,23 +463,28 @@ manage_aur_is_array(){
 		named=${ans[@]}
 		named=${named%%---*}
 		ans_args=${parse_ans##*---}
-		rc=0
+		return 0
 	else
 		parse_ans=${ans[@]}
 		named=${parse_ans%%' '*}
 		ans_args=${parse_ans##*' '}
-		rc=1
+		if [[ "${named}" == "${ans_args}" ]]; then
+			unset ans_args
+		fi
+		return 1
 	fi
 }
 
 # ${1} command to pass to cower
 # ${2} cower arguments to pass
 cower_cmd(){
+	
 	local opts
+	
 	cmd="${1}"
 	opts=( "${2}" )
 	
-	cower "${cmd}" ${opts[@]} || return 1
+	cower "${cmd}" ${opts[@]} || unset opts && return 1
 	
 	unset opts
 	
@@ -454,40 +493,20 @@ cower_cmd(){
 
 manage_aur_download(){
 	
-	local info named rc
+	local info named rc tidy_loop
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-	
-	read -p "Manage ${info} :: enter a name > " ans 
-	printf "\n"
-	
-	manage_aur_is_array "${ans[@]}" 
-	
-	if (( ! "$rc" )); then
-		for tidy_loop in ${named[@]}; do
-			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
-			printf "\n"
-			cower_cmd "-d" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-			printf "\n"
-		done
-	else
-		cower_cmd "-d" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
-	fi
-
-	unset ans rc
-	
+		
 	while true; do
 		
 		unset named
 		
 		printf "\n"
-		
-		read -p "Manage ${info} :: > " ans
+		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		printf "\n"
 		
 		named="${ans}"
-		
-		printf "\n"
 		
 		case "${ans}" in
 			@(info|msearch|search|update|install|build)) 
@@ -502,9 +521,9 @@ manage_aur_download(){
 				;;
 			*) 	manage_aur_is_array "${ans[@]}"
 				
-				if (( ! "$rc" )); then
+				if (( ! "$?" )); then
 					for tidy_loop in ${named[@]}; do
-						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
 						printf "\n"
 						cower_cmd "-d" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
 						printf "\n"
@@ -525,41 +544,21 @@ manage_aur_download(){
 
 manage_aur_info(){
 	
-	local info named rc
+	local info named rc tidy_loop
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-	
-	read -p "Manage ${info} :: enter a name > " ans 
-	printf "\n"
-	
-	manage_aur_is_array "${ans[@]}" 
-	
-	if (( ! "$rc" )); then
-		for tidy_loop in ${named[@]}; do
-			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
-			printf "\n"
-			cower_cmd "-i" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-			printf "\n"
-		done
-	else
-		cower_cmd "-i" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
-	fi
-
-	unset ans rc
 	
 	while true; do
 		
 		unset named
 		
 		printf "\n"
-		
-		read -p "Manage ${info} :: > " ans
-		
-		named="${ans}"
-		
+		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
-		
+			
+		named="${ans}"
+			
 		case "${ans}" in
 			@(download|msearch|search|update|install|build)) 
 				rc=1
@@ -573,10 +572,9 @@ manage_aur_info(){
 				;;
 			*) 	manage_aur_is_array "${ans[@]}"
 				
-				if (( ! "$rc" )); then
+				if (( ! "$?" )); then
 					for tidy_loop in ${named[@]}; do
-						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
-						printf "\n"
+						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
 						cower_cmd "-i" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
 						printf "\n"
 					done
@@ -596,40 +594,20 @@ manage_aur_info(){
 
 manage_aur_msearch(){
 	
-	local info named rc
+	local info named rc tidy_loop
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-		
-	read -p "Manage ${info} :: enter a maintainer name > " ans 
-	printf "\n"
-	
-	manage_aur_is_array "${ans[@]}" 
-	
-	if (( ! "$rc" )); then
-		for tidy_loop in ${named[@]}; do
-			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
-			printf "\n"
-			cower_cmd "-m" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-			printf "\n"
-		done
-	else
-		cower_cmd "-m" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
-	fi
-
-	unset ans rc
 	
 	while true; do
 		
 		unset named
 		
 		printf "\n"
-		
-		read -p "Manage ${info} :: > " ans
+		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		printf "\n"
 		
 		named="${ans}"
-		
-		printf "\n"
 		
 		case "${ans}" in
 			@(download|info|search|update|install|build)) 
@@ -644,9 +622,9 @@ manage_aur_msearch(){
 				;;
 			*) 	manage_aur_is_array "${ans[@]}"
 				
-				if (( ! "$rc" )); then
+				if (( ! "$?" )); then
 					for tidy_loop in ${named[@]}; do
-						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
 						printf "\n"
 						cower_cmd "-m" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
 						printf "\n"
@@ -667,40 +645,20 @@ manage_aur_msearch(){
 
 manage_aur_search(){
 	
-	local info named rc
+	local info named rc tidy_loop
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-	
-	read -p "Manage ${info} :: enter a name > " ans 
-	printf "\n"
-	
-	manage_aur_is_array "${ans[@]}" 
-	
-	if (( ! "$rc" )); then
-		for tidy_loop in ${named[@]}; do
-			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
-			printf "\n"
-			cower_cmd "-s" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-			printf "\n"
-		done
-	else
-		cower_cmd "-s" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
-	fi
-
-	unset ans rc
 	
 	while true; do
 		
 		unset named
 		
 		printf "\n"
-		
-		read -p "Manage ${info} :: > " ans
+		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		printf "\n"
 		
 		named="${ans}"
-		
-		printf "\n"
 		
 		case "${ans}" in
 			@(download|info|msearch|update|install|build)) 
@@ -715,9 +673,9 @@ manage_aur_search(){
 				;;
 			*) 	manage_aur_is_array "${ans[@]}"
 				
-				if (( ! "$rc" )); then
+				if (( ! "$?" )); then
 					for tidy_loop in ${named[@]}; do
-						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
+						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
 						printf "\n"
 						cower_cmd "-s" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
 						printf "\n"
@@ -738,40 +696,20 @@ manage_aur_search(){
 
 manage_aur_update(){
 	
-	local info named rc sp
+	local info named rc tidy_loop
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
 	
-	read -p "Manage ${info} :: enter a name or leave blank to see all installed packages > " ans 
-	printf "\n"
-	
-	manage_aur_is_array "${ans[@]}" 
-	
-	if (( ! "$rc" )); then
-		for tidy_loop in ${named[@]}; do
-			printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
-			printf "\n"
-			cower_cmd "-u" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-			printf "\n"
-		done
-	else
-		cower_cmd "-u" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}" 
-	fi
-
-	unset ans rc
-	
 	while true; do
 		
 		unset named
-		
+
 		printf "\n"
-		
-		read -p "Manage ${info} :: > " ans
+		read -p "Manage ${bold}${info}${reset} :: enter a name, leave blank for all packages > " ans
+		printf "\n"
 		
 		named="${ans}"
-		
-		printf "\n"
 		
 		case "${ans}" in
 			@(download|info|msearch|search|install|build)) 
@@ -784,12 +722,15 @@ manage_aur_update(){
 			quit) 
 				exit
 				;;
-			*) 	manage_aur_is_array "${ans[@]}"
+			*) 	if [[ -z "${ans[@]}" ]]; then ## no name, so check all packages
+					cower_cmd "-u" "${OPTS_COWER[@]}"
+					continue
+				fi
+				manage_aur_is_array "${ans[@]}"
 				
-				if (( ! "$rc" )); then
+				if (( ! "$?" )); then
 					for tidy_loop in ${named[@]}; do
-						printf "%s" "${bold}${info} :: ${tidy_loop}${reset}"
-						printf "\n"
+						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
 						cower_cmd "-u" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
 						printf "\n"
 					done
@@ -806,7 +747,6 @@ manage_aur_update(){
 	
 	unset info named rc parse_ans ans_args ans tidy_loop
 }
-
 manage_aur_install(){
 	exit
 	local info named rc
