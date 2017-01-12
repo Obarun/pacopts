@@ -491,6 +491,146 @@ cower_cmd(){
 	return 0
 }
 
+# ${1} name of the package
+install_scheme(){
+	
+	local named scheme_functions
+	named="${1}"
+	
+	for scheme_functions in install_scheme_{get_pkgbuild,dependencies,build,install}; do
+		"${scheme_functions}" "${named}"
+		if (( $? )); then
+			return 1
+		fi
+	done
+	
+	unset named scheme_functions
+	
+	return 0
+}
+
+# ${1} name of the package
+install_scheme_get_pkgbuild(){
+	
+	local named 
+		
+	named="${1}"
+	
+	printf "\n"
+	printf "%s\n" "${info} :: Get ${bold}${named}${reset} PKGBUILD"
+	printf "\n"
+	
+	search_in_dir "${work_dir}" "${named}" "PKGBUILD"
+	if (( ! $? )); then
+		printf "%s" "Manage ${bold}${info}${reset} :: ${named} exist, overwrite it?[y|n] > "
+		reply_answer
+		if (( ! $? )); then
+			cower_cmd "-df" "${named} ${ans_args[@]} ${OPTS_COWER[@]}" 
+		else
+			return 1
+		fi
+	else	
+		cower_cmd "-d" "${named} ${ans_args[@]} ${OPTS_COWER[@]}" 
+	fi
+	
+	unset named
+	
+	return 0
+}
+
+# ${1} name of the package
+install_scheme_dependencies(){
+	
+	local named tidy_loop
+	local -a dps dps_parsed
+	
+	named="${1}"
+	dps=$(cower -i $named --format=%D) # Depends
+	dps+=($(cower -i $named --format=%M)) # Makedepends
+	
+	printf "\n"
+	printf "%s\n" "${info} :: Check dependencies for ${bold}${named}${reset}"
+	printf "\n"
+	
+	# parse each element of the array to remove any <>= characters
+	for tidy_loop in ${dps[@]}; do
+		#echo tidy_loop :: $tidy_loop
+		tidy_loop=${tidy_loop%%@(>|<|=)*}
+		#echo tidy_loop parsed :: $tidy_loop
+		dps_parsed+=("$tidy_loop")
+	done
+	unset tidy_loop
+	
+	# loop through dependencies recursively
+	for tidy_loop in ${dps_parsed[@]}; do
+		
+		choose_installer "${tidy_loop}"
+		
+		rc=$?
+		
+		if [[ "$rc" == 11 ]];then
+			install_scheme_dependencies "${tidy_loop}"
+			install_scheme "${tidy_loop}"
+		fi
+	done
+	
+	unset named dps dps_parsed
+	
+	return 0
+}
+
+# ${1} name of the package
+# ${2} working directory
+install_scheme_build(){
+	
+	local named 
+	named="${1}"
+	
+	printf "\n"
+	printf "%s\n" "${info} :: Build ${bold}${named}${reset}"
+	printf "\n"
+	
+	pushd "${named}" &>/dev/null
+	
+	search_in_dir "${work_dir}" "${named}" "${named}"*.pkg.tar.xz
+	if (( ! "$?" )); then
+		printf "%s" "Manage ${bold}${info}${reset} :: ${named} compiled package exist, overwrite it?[y|n] > "
+		reply_answer
+		if (( ! "$?" )); then
+				makepkg -f ${OPTS_MAKEPKG[@]} || return 1
+		else
+			return 1
+		fi
+	else
+		makepkg ${OPTS_MAKEPKG[@]} || return 1
+	fi
+	
+	popd &>/dev/null
+	
+	unset named
+	
+	return 0
+}
+
+install_scheme_install(){
+	
+	local named
+	
+	named="${1}"
+	
+	printf "\n"
+	printf "%s\n" "${info} :: Install ${bold}${named}${reset}"
+	printf "\n"
+	
+	pushd "${named}" &>/dev/null
+	su -c "pacman ${OPTS_PACMAN[@]} ${named}-*.pkg.tar.xz" || return 1
+	popd &>/dev/null
+	
+	unset named
+	
+	return 0
+}
+
 manage_aur_download(){
 	
 	local info named rc tidy_loop
@@ -747,41 +887,33 @@ manage_aur_update(){
 	
 	unset info named rc parse_ans ans_args ans tidy_loop
 }
+
 manage_aur_install(){
-	exit
-	local info named rc
+	
+	local info named rc work_dir
 	local -a parse_ans ans_args ans
 	
+	source "${COWER_CONFIG}"
+	
 	info="${1}"
+	work_dir="${TargetDir:-/tmp}"
 	
-	read -p "Manage ${info} :: enter a name > " ans 
-	printf "\n"
-	named="${ans}"
-	
-	parse_ans=( "${ans[@]}" )
-	ans_args=( "${parse_ans[@]:1}" )
-	
-	check_var(){
-		echo parse_ans :: "${parse_ans[@]}"
-		echo ans_args :: "${ans_args[@]}"
-	}
-	#check_var
-	
-	cower_cmd "-u" "${named} ${ans_args[@]}" 
-	
-	unset ans
+	check_dir "${work_dir}"
+	if (( "$?" )); then
+		mkdir -p "${work_dir}"
+	fi
 	
 	while true; do
+		
+		pushd "${work_dir}" &>/dev/null
 		
 		unset named
 		
 		printf "\n"
-		
-		read -p "Manage ${info} :: > " ans
-		
-		named="${ans}"
-		
+		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
+			
+		named="${ans}"
 		
 		case "${ans}" in
 			@(download|info|msearch|search|update|build)) 
@@ -789,12 +921,23 @@ manage_aur_install(){
 				break
 				;;
 			help)
-				echo manage_aur_info_help :: display help for info command
+				manage_aur_install_help
 				;;
 			quit) 
 				exit
 				;;
-			*) cower_cmd "-u" "${named} ${ans_args[@]}"
+			*) manage_aur_is_array "${ans[@]}"
+				
+				if (( ! "$?" )); then
+					for tidy_loop in ${named[@]}; do
+						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+						printf "\n"
+						install_scheme "${tidy_loop}"
+						printf "\n"
+					done
+				else
+					install_scheme "${named[@]}"
+				fi
 				;;
 		esac
 	done
@@ -802,44 +945,35 @@ manage_aur_install(){
 		manage_aur 0 "${ans}"
 	fi
 	
-	unset info named rc parse_ans ans_args ans
+	unset info named rc parse_ans ans_args ans tidy_loop work_dir
 }
 
 manage_aur_build(){
-	exit
-	local info named rc
+	
+	local info named rc work_dir scheme
 	local -a parse_ans ans_args ans
 	
+	source "${COWER_CONFIG}"
+	
 	info="${1}"
+	work_dir="${TargetDir:-/tmp}"
 	
-	read -p "Manage ${info} :: enter a name > " ans 
-	printf "\n"
-	named="${ans}"
-	
-	parse_ans=( "${ans[@]}" )
-	ans_args=( "${parse_ans[@]:1}" )
-	
-	check_var(){
-		echo parse_ans :: "${parse_ans[@]}"
-		echo ans_args :: "${ans_args[@]}"
-	}
-	#check_var
-	
-	cower_cmd "-u" "${named} ${ans_args[@]}" 
-	
-	unset ans
+	check_dir "${work_dir}"
+	if (( "$?" )); then
+		mkdir -p "${work_dir}"
+	fi
 	
 	while true; do
+		
+		pushd "${work_dir}" &>/dev/null
 		
 		unset named
 		
 		printf "\n"
-		
-		read -p "Manage ${info} :: > " ans
-		
-		named="${ans}"
-		
+		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
+			
+		named="${ans}"
 		
 		case "${ans}" in
 			@(download|info|msearch|search|update|install)) 
@@ -852,15 +986,37 @@ manage_aur_build(){
 			quit) 
 				exit
 				;;
-			*) cower_cmd "-u" "${named} ${ans_args[@]}"
+			*) manage_aur_is_array "${ans[@]}"
+				
+				if (( ! "$?" )); then
+					for tidy_loop in ${named[@]}; do
+						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+						printf "\n"
+						for scheme in install_scheme_{get_pkgbuild,build};do 
+							"${scheme}" "${tidy_loop}"
+							if (( $? )); then
+								break
+							fi
+						done
+						printf "\n"
+					done
+				else
+					for scheme in install_scheme_{get_pkgbuild,build};do 
+						"${scheme}" "${tidy_loop}"
+						if (( $? )); then
+							break
+						fi
+					done
+				fi
 				;;
 		esac
 	done
+	
 	if (( $rc )); then
 		manage_aur 0 "${ans}"
 	fi
 	
-	unset info named rc parse_ans ans_args ans
+	unset info named rc parse_ans ans_args ans tidy_loop work_dir scheme
 }
 
 manage_aur_help(){
