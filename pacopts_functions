@@ -467,7 +467,7 @@ manage_aur_is_array(){
 	else
 		parse_ans=${ans[@]}
 		named=${parse_ans%%' '*}
-		ans_args=${parse_ans##*' '}
+		ans_args=${parse_ans##*${named}}
 		if [[ "${named}" == "${ans_args}" ]]; then
 			unset ans_args
 		fi
@@ -900,7 +900,7 @@ manage_aur_install(){
 	
 	check_dir "${work_dir}"
 	if (( "$?" )); then
-		mkdir -p "${work_dir}"
+		mkdir -p "${work_dir}" || die " Impossible to create the working directory"
 	fi
 	
 	while true; do
@@ -1022,7 +1022,7 @@ manage_aur_build(){
 
 manage_aur_help(){
 	printf "\n"
-	printf "%-15s\n" "The following command are available"
+	printf "%-15s\n" "The following command are available" >&1
 	printf "\n"
 	printf "%-15s %-15s\n" "     download" "download a pkgbuild for a given package" >&1
 	printf "%-15s %-15s\n" "     info" "get info for a given package" >&1
@@ -1032,14 +1032,180 @@ manage_aur_help(){
 	printf "%-15s %-15s\n" "     build" "build package(s)" >&1
 	printf "%-15s %-15s\n" "     install" "download,build,install package(s) in one pass" >&1
 	printf "%-15s %-15s\n" "     quit" "exit from the script" >&1
+	printf "\n"
+	printf "%-15s\n" "The first letter can be used e.g. d for download." >&1
+	printf "%-15s\n" "A special case exist for install, enter in." >&1
 }
 
 manage_aur_install_help(){
-	printf "\n"
-	printf "%-15s\n" "help for install command"
-	printf "\n"
+	cat << EOF
+${bold}Install a named package or a list of package.${reset}
+
+  The script look forward a triple dash to define the list e.g :
+     
+     retrovol clipit ---
+  
+  Without this regex only the first name is took.
+  A whitespace need to be present before and after the triple dash.
+  
+  The script download the PKGBUILD, build the package then install the package.
+  
+  If a dependency coming from AUR is detected, 
+  the script run again the same scheme (download, build, install) for the dependency.
+  This system is done recursively even for a list of package.
+  
+  You can switch to the main command entering his name e.g :
+     download #switch to the download command
+     info #switch to the info command
+     build #switch to the build command 
+EOF
 }
 
+manage_aur_build_help(){
+	cat << EOF
+${bold}Build a named package or a list of package.${reset}
+
+  The script look forward a triple dash to define the list e.g :
+     
+     retrovol clipit ---
+  
+  Without this regex only the first name is took.
+  A whitespace need to be present before and after the triple dash.
+  
+  The script download the PKGBUILD then build the package.
+  
+  You can switch to the main command entering his name e.g :
+     download #switch to the download command
+     info #switch to the info command
+     build #switch to the build command 
+EOF
+}
+manage_aur_download_help(){
+	cat << EOF
+${bold}Download the PKGBUILD for a named package or a list of package.${reset}
+  
+  The script look forward a triple dash to define the list e.g :
+     
+     retrovol clipit ---
+  
+  Without this regex only the first name is took.
+  A whitespace need to be present before and after the triple dash.
+
+  The script accept any extra command coming from cower e.g :
+     
+     retrovol -f
+     retrovol clipit --- -f
+     
+  See man cower for more informations.
+  
+  You can switch to the main command entering his name e.g :
+     download #switch to the download command
+     info #switch to the info command
+     build #switch to the build command 
+EOF
+}
+
+manage_aur_info_help(){
+	cat << EOF
+${bold}Get information for a named package or a list of package.${reset}
+  
+  The script look forward a triple dash to define the list e.g :
+     
+     retrovol clipit ---
+  
+  Without this regex only the first name is took.
+  A whitespace need to be present before and after the triple dash.
+
+  The script accept any extra command coming from cower e.g :
+     
+     retrovol --format=%D
+     retrovol clipit --- --format=%D
+     
+  See man cower for more informations.
+  
+  You can switch to the main command entering his name e.g :
+     download #switch to the download command
+     info #switch to the info command
+     build #switch to the build command 
+EOF
+}
+
+manage_aur_search_help(){
+	cat << EOF
+${bold}Search in AUR for a named package or a list of package.${reset}
+  
+  The script look forward a triple dash to define the list e.g :
+     
+     retrovol clipit ---
+  
+  Without this regex only the first name is took.
+  A whitespace need to be present before and after the triple dash.
+
+  The script accept any extra command coming from cower e.g :
+     
+     retrovol --by=name
+     retrovol clipit --- --by=name
+     
+  See man cower for more informations.
+  
+  You can switch to the main command entering his name e.g :
+     download #switch to the download command
+     info #switch to the info command
+     build #switch to the build command 
+EOF
+}
+
+manage_aur_msearch_help(){
+	cat << EOF
+${bold}Search for packages or a list of package maintained by a named maintainer.${reset}
+  
+  The script look forward a triple dash to define the list e.g :
+     
+     retrovol clipit ---
+  
+  Without this regex only the first name is took.
+  A whitespace need to be present before and after the triple dash.
+
+  The script accept any extra command coming from cower e.g :
+     
+     retrovol --format=%a
+     retrovol clipit --- --format=%a
+     
+  See man cower for more informations.
+  
+  You can switch to the main command entering his name e.g :
+     download #switch to the download command
+     info #switch to the info command
+     build #switch to the build command 
+EOF
+}
+
+manage_aur_update_help(){
+	cat << EOF
+${bold}Check for update in AUR for a named package or a list of package.${reset}
+  
+  The script look forward a triple dash to define the list e.g :
+     
+     retrovol clipit ---
+  
+  Without this regex only the first name is took.
+  A whitespace need to be present before and after the triple dash.
+
+  The script accept any extra command coming from cower e.g :
+     
+     retrovol --threads=8
+     retrovol clipit --- --threads=8
+     
+  See man cower for more informations.
+  
+  If you leave the name blank, the script check for all installed package coming from AUR.
+  
+  You can switch to the main command entering his name e.g :
+     download #switch to the download command
+     info #switch to the info command
+     build #switch to the build command 
+EOF
+}
 # ${1} first pass or not : 0 for not, 1 for yes
 # ${2} cower command or extra command e.g. install
 
