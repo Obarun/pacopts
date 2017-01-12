@@ -497,7 +497,7 @@ install_scheme(){
 	local named scheme_functions
 	named="${1}"
 	
-	for scheme_functions in install_scheme_{get_pkgbuild,dependencies,build,install}; do
+	for scheme_functions in scheme_{get_pkgbuild,dependencies,build,install}; do
 		"${scheme_functions}" "${named}"
 		if (( $? )); then
 			return 1
@@ -510,7 +510,7 @@ install_scheme(){
 }
 
 # ${1} name of the package
-install_scheme_get_pkgbuild(){
+scheme_get_pkgbuild(){
 	
 	local named 
 		
@@ -539,7 +539,7 @@ install_scheme_get_pkgbuild(){
 }
 
 # ${1} name of the package
-install_scheme_dependencies(){
+scheme_dependencies(){
 	
 	local named tidy_loop
 	local -a dps dps_parsed
@@ -569,19 +569,19 @@ install_scheme_dependencies(){
 		rc=$?
 		
 		if [[ "$rc" == 11 ]];then
-			install_scheme_dependencies "${tidy_loop}"
-			install_scheme "${tidy_loop}"
+			scheme_dependencies "${tidy_loop}"
+			scheme_install "${tidy_loop}"
 		fi
 	done
 	
-	unset named dps dps_parsed
+	unset named dps dps_parsed tidy_loop
 	
 	return 0
 }
 
 # ${1} name of the package
 # ${2} working directory
-install_scheme_build(){
+scheme_build(){
 	
 	local named 
 	named="${1}"
@@ -612,7 +612,7 @@ install_scheme_build(){
 	return 0
 }
 
-install_scheme_install(){
+scheme_install(){
 	
 	local named
 	
@@ -936,7 +936,7 @@ manage_aur_install(){
 						printf "\n"
 					done
 				else
-					install_scheme "${named[@]}"
+					install_scheme "${named}"
 				fi
 				;;
 		esac
@@ -960,7 +960,7 @@ manage_aur_build(){
 	
 	check_dir "${work_dir}"
 	if (( "$?" )); then
-		mkdir -p "${work_dir}"
+		mkdir -p "${work_dir}" || die " Impossible to create the working directory"
 	fi
 	
 	while true; do
@@ -988,11 +988,12 @@ manage_aur_build(){
 				;;
 			*) manage_aur_is_array "${ans[@]}"
 				
+				
 				if (( ! "$?" )); then
 					for tidy_loop in ${named[@]}; do
 						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
 						printf "\n"
-						for scheme in install_scheme_{get_pkgbuild,build};do 
+						for scheme in scheme_{get_pkgbuild,build};do 
 							"${scheme}" "${tidy_loop}"
 							if (( $? )); then
 								break
@@ -1001,8 +1002,8 @@ manage_aur_build(){
 						printf "\n"
 					done
 				else
-					for scheme in install_scheme_{get_pkgbuild,build};do 
-						"${scheme}" "${tidy_loop}"
+					for scheme in scheme_{get_pkgbuild,build};do 
+						"${scheme}" "${named}"
 						if (( $? )); then
 							break
 						fi
@@ -1028,6 +1029,8 @@ manage_aur_help(){
 	printf "%-15s %-15s\n" "     msearch" "search for packages maintained by a given name" >&1
 	printf "%-15s %-15s\n" "     search" "search for packages with a given name or regex pattern" >&1
 	printf "%-15s %-15s\n" "     update" "check for updates for a given packages" >&1
+	printf "%-15s %-15s\n" "     build" "build package(s)" >&1
+	printf "%-15s %-15s\n" "     install" "download,build,install package(s) in one pass" >&1
 	printf "%-15s %-15s\n" "     quit" "exit from the script" >&1
 }
 
