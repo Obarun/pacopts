@@ -519,7 +519,7 @@ scheme_get_pkgbuild(){
 	printf "%s\n" "${info} :: Get ${bold}${named}${reset} PKGBUILD"
 	printf "\n"
 	
-	search_in_dir "${work_dir}" "${named}" "PKGBUILD"
+	search_in_dir "${work_dir}" "${named}" "PKGBUILD" &>/dev/null
 	if (( ! $? )); then
 		printf "%s" "Manage ${bold}${info}${reset} :: ${named} exist, overwrite it?[y|n] > "
 		reply_answer
@@ -591,7 +591,7 @@ scheme_build(){
 	
 	pushd "${named}" &>/dev/null
 	
-	search_in_dir "${work_dir}" "${named}" "${named}"*.pkg.tar.xz
+	search_in_dir "${work_dir}" "${named}" "${named}"*.pkg.tar.xz &>/dev/null
 	if (( ! "$?" )); then
 		printf "%s" "Manage ${bold}${info}${reset} :: ${named} compiled package exist, overwrite it?[y|n] > "
 		reply_answer
