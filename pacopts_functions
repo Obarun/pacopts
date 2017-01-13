@@ -5,7 +5,7 @@
 # can do whatever you want with this stuff. If we meet some day, and you think
 # this stuff is worth it, you can buy me a beer in return.   Eric Vidal
 
-#shopt -s extglob
+shellopts_set_unset "extglob" 0
 
 sourcing(){
 	
@@ -642,7 +642,7 @@ manage_aur_download(){
 		unset named
 		
 		printf "\n"
-		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
 		
 		named="${ans}"
@@ -692,7 +692,7 @@ manage_aur_info(){
 		unset named
 		
 		printf "\n"
-		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
 			
 		named="${ans}"
@@ -741,7 +741,7 @@ manage_aur_msearch(){
 		unset named
 		
 		printf "\n"
-		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
 		
 		named="${ans}"
@@ -791,7 +791,7 @@ manage_aur_search(){
 		unset named
 		
 		printf "\n"
-		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
 		
 		named="${ans}"
@@ -841,7 +841,7 @@ manage_aur_update(){
 		unset named
 
 		printf "\n"
-		read -p "Manage ${bold}${info}${reset} :: enter a name, leave blank for all packages > " ans
+		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
 		
 		named="${ans}"
@@ -887,8 +887,6 @@ manage_aur_install(){
 	local info named rc work_dir
 	local -a parse_ans ans_args ans
 	
-	source "${COWER_CONFIG}"
-	
 	info="${1}"
 	work_dir="${TargetDir:-/tmp}"
 	
@@ -904,7 +902,7 @@ manage_aur_install(){
 		unset named
 		
 		printf "\n"
-		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
 			
 		named="${ans}"
@@ -947,8 +945,6 @@ manage_aur_build(){
 	local info named rc work_dir scheme
 	local -a parse_ans ans_args ans
 	
-	source "${COWER_CONFIG}"
-	
 	info="${1}"
 	work_dir="${TargetDir:-/tmp}"
 	
@@ -964,7 +960,7 @@ manage_aur_build(){
 		unset named
 		
 		printf "\n"
-		read -p "Manage ${bold}${info}${reset} :: enter a name > " ans
+		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
 			
 		named="${ans}"
@@ -1012,6 +1008,60 @@ manage_aur_build(){
 	fi
 	
 	unset info named rc parse_ans ans_args ans tidy_loop work_dir scheme
+}
+
+# ${1} first pass or not : 0 for not, 1 for yes
+# ${2} cower command or extra command e.g. install
+
+manage_aur(){
+	
+	if [[ ! -f "${COWER_CONFIG}" ]]; then
+		die " a configuration file for cower need to be present at ${COWER_CONFIG}"
+	else
+		source "${COWER_CONFIG}"
+	fi
+	
+	local cower_cmd _pass
+	_pass="${1}"
+	manage_cmd="${2}"
+	
+	if (( "${_pass}" )); then
+		printf "\n"
+		
+		read -ep "Manage :: please enter your command > " ans
+		manage_cmd="${ans}"
+	fi
+	
+	case $manage_cmd in
+			@(d|download))
+				manage_aur_download "download"
+				;;
+			@(i|info))
+				manage_aur_info "info"
+				;;
+			@(m|msearch))
+				manage_aur_msearch "msearch"
+				;;
+			@(s|search))
+				manage_aur_search "search"
+				;;
+			@(u|update))
+				manage_aur_update "update"
+				;;
+			@(in|install))
+				manage_aur_install "install"
+				;;
+			@(b|build))
+				manage_aur_build "build"
+				;;
+			quit)
+				exit
+				;;
+			*)
+				manage_aur_help
+				manage_aur 1
+				;;
+	esac
 }
 
 manage_aur_help(){
@@ -1067,6 +1117,7 @@ ${bold}Build a named package or a list of package.${reset}
   A whitespace need to be present before and after the triple dash.
   
   The script download the PKGBUILD then build the package.
+  The AUR dependencies is not resolved.
   
   You can switch to the main command entering his name e.g :
      download #switch to the download command
@@ -1200,56 +1251,4 @@ ${bold}Check for update in AUR for a named package or a list of package.${reset}
      exit #to exit from the script
 EOF
 }
-# ${1} first pass or not : 0 for not, 1 for yes
-# ${2} cower command or extra command e.g. install
 
-manage_aur(){
-	
-	(( EUID != 0 )) || die " this part of the must be run without root privilegies" 
-	
-	if [[ -z "${COWER_CONFIG}" ]]; then
-		die " a configuration file for cower need to be present at ${COWER_CONFIG}"
-	fi
-		
-	local cower_cmd _pass
-	_pass="${1}"
-	manage_cmd="${2}"
-	
-	if (( "${_pass}" )); then
-		printf "\n"
-		
-		read -p "Manage :: please enter your command > " ans
-		manage_cmd="${ans}"
-	fi
-	
-	case $manage_cmd in
-			@(d|download))
-				manage_aur_download "download"
-				;;
-			@(i|info))
-				manage_aur_info "info"
-				;;
-			@(m|msearch))
-				manage_aur_msearch "msearch"
-				;;
-			@(s|search))
-				manage_aur_search "search"
-				;;
-			@(u|update))
-				manage_aur_update "update"
-				;;
-			@(in|install))
-				manage_aur_install "install"
-				;;
-			@(b|build))
-				manage_aur_build "build"
-				;;
-			quit)
-				exit
-				;;
-			*)
-				manage_aur_help
-				manage_aur 1
-				;;
-	esac
-}
