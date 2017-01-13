@@ -28,7 +28,7 @@ sourcing
 shellopts_save
 shellopts_set_unset "extglob" 0
 
-if [[ -z "${2}" ]] && [[ "${1}" != @(origin|applytmp) ]]; then
+if [[ -z "${2}" ]] && [[ "${1}" != @(origin|applytmp|aur) ]]; then
 	usage
 	exit 1
 fi
