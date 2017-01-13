@@ -25,7 +25,6 @@ sourcing(){
 #sourcing
 
 COWER_CONFIG="$HOME/.config/cower/config"
-OPTS_COWER="--color"
 SP="---" # character to use to know if the commandline on manage_aur_* is a list or not
 
 ## 		common functions
@@ -570,7 +569,7 @@ scheme_dependencies(){
 		
 		if [[ "$rc" == 11 ]];then
 			scheme_dependencies "${tidy_loop}"
-			scheme_install "${tidy_loop}"
+			install_scheme "${tidy_loop}"
 		fi
 	done
 	
@@ -654,7 +653,7 @@ manage_aur_download(){
 				break
 				;;
 			help)
-				cower_cmd "-h"
+				manage_aur_download_help
 				;;
 			quit) 
 				exit
@@ -671,7 +670,6 @@ manage_aur_download(){
 				else
 					cower_cmd "-d" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
 				fi
-				unset rc
 				;;
 		esac
 	done
@@ -705,7 +703,7 @@ manage_aur_info(){
 				break
 				;;
 			help)
-				cower_cmd "-h"
+				manage_aur_info_help
 				;;
 			quit) 
 				exit
@@ -721,7 +719,6 @@ manage_aur_info(){
 				else
 					cower_cmd "-i" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
 				fi
-				unset rc
 				;;
 		esac
 	done
@@ -755,7 +752,7 @@ manage_aur_msearch(){
 				break
 				;;
 			help)
-				cower_cmd "-h"
+				manage_aur_msearch_help
 				;;
 			quit) 
 				exit
@@ -772,7 +769,6 @@ manage_aur_msearch(){
 				else
 					cower_cmd "-m" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
 				fi
-				unset rc
 				;;
 		esac
 	done
@@ -806,7 +802,7 @@ manage_aur_search(){
 				break
 				;;
 			help)
-				cower_cmd "-h"
+				manage_aur_search_help
 				;;
 			quit) 
 				exit
@@ -823,7 +819,6 @@ manage_aur_search(){
 				else
 					cower_cmd "-s" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
 				fi
-				unset rc
 				;;
 		esac
 	done
@@ -857,7 +852,7 @@ manage_aur_update(){
 				break
 				;;
 			help)
-				cower_cmd "-h"
+				manage_aur_update_help
 				;;
 			quit) 
 				exit
@@ -877,7 +872,6 @@ manage_aur_update(){
 				else
 					cower_cmd "-u" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
 				fi
-				unset rc
 				;;
 		esac
 	done
@@ -981,7 +975,7 @@ manage_aur_build(){
 				break
 				;;
 			help)
-				echo manage_aur_info_help :: display help for info command
+				manage_aur_build_help
 				;;
 			quit) 
 				exit
@@ -1056,8 +1050,8 @@ ${bold}Install a named package or a list of package.${reset}
   
   You can switch to the main command entering his name e.g :
      download #switch to the download command
-     info #switch to the info command
-     build #switch to the build command 
+     build #switch to the build command
+     exit #to exit from the script
 EOF
 }
 
@@ -1076,8 +1070,8 @@ ${bold}Build a named package or a list of package.${reset}
   
   You can switch to the main command entering his name e.g :
      download #switch to the download command
-     info #switch to the info command
-     build #switch to the build command 
+     build #switch to the build command
+     exit #to exit from the script
 EOF
 }
 manage_aur_download_help(){
@@ -1100,8 +1094,8 @@ ${bold}Download the PKGBUILD for a named package or a list of package.${reset}
   
   You can switch to the main command entering his name e.g :
      download #switch to the download command
-     info #switch to the info command
-     build #switch to the build command 
+     build #switch to the build command
+     exit #to exit from the script
 EOF
 }
 
@@ -1125,8 +1119,8 @@ ${bold}Get information for a named package or a list of package.${reset}
   
   You can switch to the main command entering his name e.g :
      download #switch to the download command
-     info #switch to the info command
-     build #switch to the build command 
+     build #switch to the build command
+     exit #to exit from the script
 EOF
 }
 
@@ -1150,8 +1144,8 @@ ${bold}Search in AUR for a named package or a list of package.${reset}
   
   You can switch to the main command entering his name e.g :
      download #switch to the download command
-     info #switch to the info command
-     build #switch to the build command 
+     build #switch to the build command
+     exit #to exit from the script
 EOF
 }
 
@@ -1175,8 +1169,8 @@ ${bold}Search for packages or a list of package maintained by a named maintainer
   
   You can switch to the main command entering his name e.g :
      download #switch to the download command
-     info #switch to the info command
-     build #switch to the build command 
+     build #switch to the build command
+     exit #to exit from the script
 EOF
 }
 
@@ -1202,8 +1196,8 @@ ${bold}Check for update in AUR for a named package or a list of package.${reset}
   
   You can switch to the main command entering his name e.g :
      download #switch to the download command
-     info #switch to the info command
-     build #switch to the build command 
+     build #switch to the build command
+     exit #to exit from the script
 EOF
 }
 # ${1} first pass or not : 0 for not, 1 for yes
