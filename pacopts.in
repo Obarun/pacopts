@@ -28,13 +28,16 @@ sourcing
 shellopts_save
 shellopts_set_unset "extglob" 0
 
-(( EUID == 0 )) && [[ "${1}" == aur ]] || die " You must be run this script with root privileges"
- 
 if [[ -z "${2}" ]] && [[ "${1}" != @(origin|applytmp) ]]; then
 	usage
 	exit 1
 fi
 
+if [[ "${1}" == aur ]]; then
+	(( EUID != 0 )) || die " You must be run this options without root privilegies"
+else
+	(( EUID == 0 )) || die " You must be run this script with root privilegies"
+fi
 
 case "${1}" in
 	origin)
