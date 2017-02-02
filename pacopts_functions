@@ -494,16 +494,31 @@ cower_cmd(){
 install_scheme(){
 	
 	local named scheme_functions
+	local -a installed_yet
+	
 	named="${1}"
+	installed_yet=($(pacman -Qsq ${named}))
 	
-	for scheme_functions in scheme_{get_pkgbuild,dependencies,build,install}; do
-		"${scheme_functions}" "${named}"
-		if (( $? )); then
-			return 1
-		fi
-	done
+	if [[ -z ${installed_yet[@]} ]]; then
+		rc=1
+	else
+		check_elements "${named}" ${installed_yet[@]}
+		rc=$?
+	fi
 	
-	unset named scheme_functions
+	if (( "${rc}" )); then
+		
+		unset rc
+	
+		for scheme_functions in scheme_{get_pkgbuild,dependencies,build,install}; do
+			"${scheme_functions}" "${named}"
+			if (( $? )); then
+				return 1
+			fi
+		done
+	fi
+	
+	unset named scheme_functions installed_yet
 	
 	return 0
 }
@@ -511,7 +526,7 @@ install_scheme(){
 # ${1} name of the package
 scheme_get_pkgbuild(){
 	
-	local named 
+	local named real_name
 		
 	named="${1}"
 	
@@ -519,7 +534,9 @@ scheme_get_pkgbuild(){
 	printf "%s\n" "${info} :: Get ${bold}${named}${reset} PKGBUILD"
 	printf "\n"
 	
-	search_in_dir "${work_dir}" "${named}" "PKGBUILD" &>/dev/null
+	real_name=$(cower -i ${named} --format=%b)
+	
+	search_in_dir "${work_dir}" "${real_name}" "PKGBUILD" &>/dev/null
 	if (( ! $? )); then
 		printf "%s" "Manage ${bold}${info}${reset} :: ${named} exist, overwrite it?[y|n] > "
 		reply_answer
@@ -532,7 +549,7 @@ scheme_get_pkgbuild(){
 		cower_cmd "-d" "${named} ${ans_args[@]} ${OPTS_COWER[@]}" 
 	fi
 	
-	unset named
+	unset named real_name
 	
 	return 0
 }
@@ -582,16 +599,19 @@ scheme_dependencies(){
 # ${2} working directory
 scheme_build(){
 	
-	local named 
+	local named real_name
 	named="${1}"
 	
 	printf "\n"
 	printf "%s\n" "${info} :: Build ${bold}${named}${reset}"
 	printf "\n"
 	
-	pushd "${named}" &>/dev/null
+	real_name=$(cower -i ${named} --format=%b)
 	
-	search_in_dir "${work_dir}" "${named}" "${named}"*.pkg.tar.xz &>/dev/null
+	pushd "${real_name}" &>/dev/null
+	
+	search_in_dir "${work_dir}" "${real_name}" "${real_name}"*.pkg.tar.xz &>/dev/null
+	
 	if (( ! "$?" )); then
 		printf "%s" "Manage ${bold}${info}${reset} :: ${named} compiled package exist, overwrite it?[y|n] > "
 		reply_answer
@@ -606,14 +626,14 @@ scheme_build(){
 	
 	popd &>/dev/null
 	
-	unset named
+	unset named real_name
 	
 	return 0
 }
 
 scheme_install(){
 	
-	local named
+	local named real_name
 	
 	named="${1}"
 	
@@ -621,11 +641,15 @@ scheme_install(){
 	printf "%s\n" "${info} :: Install ${bold}${named}${reset}"
 	printf "\n"
 	
-	pushd "${named}" &>/dev/null
-	su -c "pacman ${OPTS_PACMAN[@]} ${named}-*.pkg.tar.xz" || return 1
+	real_name=$(cower -i ${named} --format=%b)
+	
+	pushd "${real_name}" &>/dev/null
+	
+	su -c "pacman ${OPTS_PACMAN[@]} ${real_name}-*.pkg.tar.xz" || return 1
+	
 	popd &>/dev/null
 	
-	unset named
+	unset named real_name
 	
 	return 0
 }
