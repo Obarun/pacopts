@@ -875,6 +875,9 @@ manage_aur_update(){
 				rc=1
 				break
 				;;
+			all)
+				echo_info " Under contruction"
+				;;
 			help)
 				manage_aur_update_help
 				;;
@@ -1127,7 +1130,7 @@ ${bold}Install a named package or a list of package.${reset}
   You can switch to the main command entering his name e.g :
      download #switch to the download command
      build #switch to the build command
-     exit #to exit from the script
+     quit #to exit from the script
 EOF
 }
 
@@ -1148,7 +1151,7 @@ ${bold}Build a named package or a list of package.${reset}
   You can switch to the main command entering his name e.g :
      download #switch to the download command
      build #switch to the build command
-     exit #to exit from the script
+     quit #to exit from the script
 EOF
 }
 manage_aur_download_help(){
@@ -1172,7 +1175,7 @@ ${bold}Download the PKGBUILD for a named package or a list of package.${reset}
   You can switch to the main command entering his name e.g :
      download #switch to the download command
      build #switch to the build command
-     exit #to exit from the script
+     quit #to exit from the script
 EOF
 }
 
@@ -1197,7 +1200,7 @@ ${bold}Get information for a named package or a list of package.${reset}
   You can switch to the main command entering his name e.g :
      download #switch to the download command
      build #switch to the build command
-     exit #to exit from the script
+     quit #to exit from the script
 EOF
 }
 
@@ -1222,7 +1225,7 @@ ${bold}Search in AUR for a named package or a list of package.${reset}
   You can switch to the main command entering his name e.g :
      download #switch to the download command
      build #switch to the build command
-     exit #to exit from the script
+     quit #to exit from the script
 EOF
 }
 
@@ -1247,7 +1250,7 @@ ${bold}Search for packages or a list of package maintained by a named maintainer
   You can switch to the main command entering his name e.g :
      download #switch to the download command
      build #switch to the build command
-     exit #to exit from the script
+     quit #to exit from the script
 EOF
 }
 
@@ -1274,7 +1277,7 @@ ${bold}Check for update in AUR for a named package or a list of package.${reset}
   You can switch to the main command entering his name e.g :
      download #switch to the download command
      build #switch to the build command
-     exit #to exit from the script
+     quit #to exit from the script
 EOF
 }
 
