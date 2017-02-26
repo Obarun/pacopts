@@ -26,6 +26,7 @@ sourcing(){
 
 COWER_CONFIG="$HOME/.config/cower/config"
 SP="---" # character to use to know if the commandline on manage_aur_* is a list or not
+UPDATE=0
 
 ## 		common functions
 
@@ -506,6 +507,10 @@ install_scheme(){
 		rc=$?
 	fi
 	
+	if (( "${UPDATE}" )); then
+		rc=1
+	fi
+	
 	if (( "${rc}" )); then
 		
 		unset rc
@@ -855,13 +860,21 @@ manage_aur_search(){
 
 manage_aur_update(){
 	
-	local info named rc tidy_loop
-	local -a parse_ans ans_args ans
+	local info named rc tidy_loop pack
+	local -a parse_ans ans_args ans update_list
 	
 	info="${1}"
+	work_dir="${WORKDIR:-/tmp}"
+	
+	check_dir "${work_dir}"
+	if (( "$?" )); then
+		mkdir -p "${work_dir}" || die " Impossible to create the working directory"
+	fi
 	
 	while true; do
-		
+	
+		pushd "${work_dir}" &>/dev/null
+	
 		unset named
 
 		printf "\n"
@@ -876,7 +889,19 @@ manage_aur_update(){
 				break
 				;;
 			all)
-				echo_info " Under contruction"
+				update_list=$(cower_cmd "-uq")
+				if (( ${#update_list} )); then
+					UPDATE=1
+					echo path::$(pwd)
+					for pack in ${update_list[@]}; do
+						printf "%s\n" "${info} :: ${bold}${pack}${reset}"
+						install_scheme "${pack}"
+						printf "\n"
+					done
+				else
+					printf "%s\n" "${info} :: ${bold}nothing to do${reset}"
+				fi
+				UPDATE=0
 				;;
 			help)
 				manage_aur_update_help
@@ -906,7 +931,7 @@ manage_aur_update(){
 		manage_aur 0 "${ans}"
 	fi
 	
-	unset info named rc parse_ans ans_args ans tidy_loop
+	unset info named rc parse_ans ans_args ans tidy_loop update_list pack
 }
 
 manage_aur_install(){
@@ -915,7 +940,7 @@ manage_aur_install(){
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-	work_dir="${TargetDir:-/tmp}"
+	work_dir="${WORKDIR:-/tmp}"
 	
 	check_dir "${work_dir}"
 	if (( "$?" )); then
@@ -973,7 +998,7 @@ manage_aur_build(){
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-	work_dir="${TargetDir:-/tmp}"
+	work_dir="${WORKDIR:-/tmp}"
 	
 	check_dir "${work_dir}"
 	if (( "$?" )); then
@@ -1034,6 +1059,9 @@ manage_aur_build(){
 		manage_aur 0 "${ans}"
 	fi
 	
+	popd &>/dev/null
+	
+	echo path::$(pwd)
 	unset info named rc parse_ans ans_args ans tidy_loop work_dir scheme
 }
 
