@@ -1256,7 +1256,9 @@ EOF
 
 manage_aur_update_help(){
 	cat << EOF
-${bold}Check for update in AUR for a named package or a list of package.${reset}
+${bold}Check for update in AUR for a named package or a list of package.
+If you enter all as arguments, all installed packages will be updated on 
+your system.${reset}
   
   The script look forward a triple dash to define the list e.g :
      
