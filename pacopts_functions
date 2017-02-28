@@ -875,7 +875,7 @@ manage_aur_update(){
 	local -a parse_ans ans_args ans update_list
 	
 	info="${1}"
-	work_dir="${WORKDIR:-/tmp}"
+	work_dir="${TargetDir:-/tmp}"
 	
 	check_dir "${work_dir}"
 	if (( "$?" )); then
@@ -948,7 +948,7 @@ manage_aur_install(){
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-	work_dir="${WORKDIR:-/tmp}"
+	work_dir="${TargetDir:-/tmp}"
 	
 	check_dir "${work_dir}"
 	if (( "$?" )); then
@@ -1006,7 +1006,7 @@ manage_aur_build(){
 	local -a parse_ans ans_args ans
 	
 	info="${1}"
-	work_dir="${WORKDIR:-/tmp}"
+	work_dir="${TargetDir:-/tmp}"
 	
 	check_dir "${work_dir}"
 	if (( "$?" )); then
