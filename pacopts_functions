@@ -26,7 +26,7 @@ sourcing(){
 
 COWER_CONFIG="$HOME/.config/cower/config"
 SP="---" # character to use to know if the commandline on manage_aur_* is a list or not
-UPDATE=0
+
 
 ## 		common functions
 
@@ -495,37 +495,48 @@ cower_cmd(){
 install_scheme(){
 	
 	local named scheme_functions
-	local -a installed_yet
+	local -a installed_yet installed_version aur_version
 	
 	named="${1}"
-	installed_yet=($(pacman -Qsq ${named}))
 	
-	if [[ -z ${installed_yet[@]} ]]; then
-		rc=1
+	installed_yet=$(pacman -Qsq ${named})
+	installed_version=$(expac -Q %v ${named}|sed "s:-:.:")
+	aur_version=$(cower -i ${named} --format=%v|sed "s:-:.:")
+	
+	# already installed or not
+	if	check_elements "${named}" ${installed_yet[@]}; then
+		# check the version, if differ then install it
+		if ! check_elements ${installed_version} ${aur_version}; then
+			# check the upper version
+			awk -v n1=${aur_version} -v n2=${installed_version} 'BEGIN {if (n1>n2) exit 1; exit 0}'
+			if (( $? )); then
+				rc=1
+			else
+				rc=0
+				printf "\n"
+				printf "%s\n" "${info} :: ${bold}${named}${reset} already up to date"
+				printf "\n"
+			fi
+		else
+			rc=0
+			printf "\n"
+			printf "%s\n" "${info} :: ${bold}${named}${reset} already up to date"
+			printf "\n"
+		fi
 	else
-		check_elements "${named}" ${installed_yet[@]}
-		rc=$?
+		rc=1	
 	fi
-	
-	if (( "${UPDATE}" )); then
-		rc=1
-	fi
-	
+			
 	if (( "${rc}" )); then
 		
 		unset rc
 	
 		for scheme_functions in scheme_{get_pkgbuild,dependencies,build,install}; do
 			"${scheme_functions}" "${named}"
-			if (( $? )); then
-				return 1
-			fi
 		done
 	fi
 	
-	unset named scheme_functions installed_yet
-	
-	return 0
+	unset named scheme_functions installed_yet installed_version aur_version
 }
 
 # ${1} name of the package
@@ -873,8 +884,6 @@ manage_aur_update(){
 	
 	while true; do
 	
-		pushd "${work_dir}" &>/dev/null
-	
 		unset named
 
 		printf "\n"
@@ -891,17 +900,16 @@ manage_aur_update(){
 			all)
 				update_list=$(cower_cmd "-uq")
 				if (( ${#update_list} )); then
-					UPDATE=1
-					echo path::$(pwd)
+					pushd "${work_dir}" &>/dev/null
 					for pack in ${update_list[@]}; do
 						printf "%s\n" "${info} :: ${bold}${pack}${reset}"
 						install_scheme "${pack}"
 						printf "\n"
 					done
+					popd &>/dev/null
 				else
 					printf "%s\n" "${info} :: ${bold}nothing to do${reset}"
 				fi
-				UPDATE=0
 				;;
 			help)
 				manage_aur_update_help
@@ -1061,7 +1069,6 @@ manage_aur_build(){
 	
 	popd &>/dev/null
 	
-	echo path::$(pwd)
 	unset info named rc parse_ans ans_args ans tidy_loop work_dir scheme
 }
 
