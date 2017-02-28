@@ -94,7 +94,7 @@ find_origin(){
 					parse_ori_version=${parse_ori##*[}
 					ver=$(grep ":" <<< "${parse_ori_version}")
 					
-					if [[ -n "${ver}" ]];then
+					if (( ! "${#ver}" ));then
 						parse_ori_version=${parse_ori_version##*' '}
 						parse_ori_version=${parse_ori_version%%]*}
 					else
@@ -115,7 +115,7 @@ find_origin(){
 				#check_var
 				
 				# version is not empty, the package installed do not come from $repo_origin
-				if [[ -n $parse_ori_version ]]; then
+				if (( ! ${#parse_ori_version} ]]; then
 					false+=("$check")
 				fi
 				
@@ -158,7 +158,7 @@ check_package(){
 	#check origin of package
 	find_origin "${repo}"
 	
-	if ! [[ -z "${false[@]}" ]]; then 
+	if (( "${#false}" )); then 
 		printf "${byellow}==>> These/those package(s) do not come from ${repo} repository :${reset}\n" 
 		for no in "${false[@]}"; do
 			echo_bold "	-> $no"
@@ -276,14 +276,14 @@ line_u(){
 
 	check_args "${line}"
 	
-	if [[ -z "${directory_}" ]]; then
+	if (( "${#directory_}" )); then
 		optdirectory="-d"
 		optdirectory_v="/"
 	else
 		optdirectory="-d"
 		optdirectory_v="${directory_}"
 	fi
-	if [[ -z "${uidgid}" ]]; then
+	if (( "${#uidgid}" )); then
 		optgid=""
 		optgid_v=""
 		optuid=""
@@ -294,7 +294,7 @@ line_u(){
 		optuid="-u" 
 		optuid_v="${uidgid}"
 	fi
-	if [[ -z "${comment_}" ]]; then
+	if (( "${#comment_}" )); then
 		optcomment=""
 		optcomment_v=""
 	else
@@ -327,7 +327,7 @@ line_g(){
 	
 	check_args "${line}"
 	
-	if [[ -z "${uidgid}" ]]; then
+	if (( "${#uidgid}" )); then
 		optgid=""
 		optgid_v=""
 		optuid=""
@@ -356,7 +356,7 @@ line_m(){
 	
 	check_args "${line}"
 	
-	if [[ -z "${directory_}" ]]; then
+	if (( "${#directory_}" )); then
 		optdirectory=""
 		optdirectory_v=""
 	else
@@ -364,7 +364,7 @@ line_m(){
 		optdirectory_v="${directory_}"
 	fi
 	
-	if [[ -z "${uidgid}" ]]; then
+	if (( "${#uidgid}" )); then
 		optgid=""
 		optgid_v=""
 		optuid=""
@@ -376,7 +376,7 @@ line_m(){
 		optuid_v="${uidgid}"
 	fi
 	
-	if [[ -z "${comment_}" ]]; then
+	if (( "${#comment_}" )); then
 		optcomment=""
 		optcomment_v=""
 	else
@@ -385,13 +385,13 @@ line_m(){
 	fi
 	
 	getent group ${group_g} &>/dev/null
-	if [[ $? -ne 0 ]]; then
+	if (( $? )); then
 		echo_info " group ${group_g} does not exist, create it"
 		groupadd -r "${optgid}" "${optgid_v}" "${group_g}" || die " Impossible to create group ${group_g}"
 	fi
 	
 	getent passwd ${named_g} &>/dev/null
-	if [[ $? -ne 0 ]]; then
+	if (( $? )); then
 		echo_info " user ${named_g} does not exist, create it"
 		echo useradd -r "${optuid}" "${optuid_v}" "${optgid}" "${optgid_v}" "${optdirectory}" "${optdirectory_v}" "${optcomment}" "${optcomment_v}" "${named_g}" || die " Impossible to create user ${named_g}"
 	fi
@@ -917,7 +917,7 @@ manage_aur_update(){
 			quit) 
 				exit
 				;;
-			*) 	if [[ -z "${ans[@]}" ]]; then ## no name, so check all packages
+			*) 	if (( ! ${#ans} )); then ## no name, so check all packages
 					cower_cmd "-u" "${OPTS_COWER[@]}"
 					continue
 				fi
