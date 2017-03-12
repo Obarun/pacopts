@@ -504,13 +504,20 @@ install_scheme(){
 	aur_version=$(cower -i ${named} --format=%v|sed "s:-:.:")
 	
 	# already installed or not
-	if	check_elements "${named}" ${installed_yet[@]}; then
-		# check the version, if differ then install it
-		if ! check_elements ${installed_version} ${aur_version}; then
-			# check the upper version
-			awk -v n1=${aur_version} -v n2=${installed_version} 'BEGIN {if (n1>n2) exit 1; exit 0}'
-			if (( $? )); then
-				rc=1
+	if (( "${#installed_yet}" )); then
+		if check_elements "${named}" ${installed_yet[@]}; then
+			# check the version, if differ then install it
+			if ! check_elements ${installed_version} ${aur_version}; then
+				# check the upper version
+				awk -v n1=${aur_version} -v n2=${installed_version} 'BEGIN {if (n1>n2) exit 1; exit 0}'
+				if (( $? )); then
+					rc=1
+				else
+					rc=0
+					printf "\n"
+					printf "%s\n" "${info} :: ${bold}${named}${reset} already up to date"
+					printf "\n"
+				fi
 			else
 				rc=0
 				printf "\n"
@@ -518,13 +525,10 @@ install_scheme(){
 				printf "\n"
 			fi
 		else
-			rc=0
-			printf "\n"
-			printf "%s\n" "${info} :: ${bold}${named}${reset} already up to date"
-			printf "\n"
+			rc=1	
 		fi
 	else
-		rc=1	
+		rc=1
 	fi
 			
 	if (( "${rc}" )); then
@@ -688,6 +692,9 @@ manage_aur_download(){
 		named="${ans}"
 		
 		case "${ans}" in
+			"")
+				printf "%s\n" "${info} :: enter a name please"
+				;;
 			@(info|msearch|search|update|install|build)) 
 				rc=1
 				break
@@ -738,6 +745,9 @@ manage_aur_info(){
 		named="${ans}"
 			
 		case "${ans}" in
+			"")
+				printf "%s\n" "${info} :: enter a name please"
+				;;
 			@(download|msearch|search|update|install|build)) 
 				rc=1
 				break
@@ -787,6 +797,9 @@ manage_aur_msearch(){
 		named="${ans}"
 		
 		case "${ans}" in
+			"")
+				printf "%s\n" "${info} :: enter a name please"
+				;;
 			@(download|info|search|update|install|build)) 
 				rc=1
 				break
@@ -837,6 +850,9 @@ manage_aur_search(){
 		named="${ans}"
 		
 		case "${ans}" in
+			"")
+				printf "%s\n" "${info} :: enter a name please"
+				;;
 			@(download|info|msearch|update|install|build)) 
 				rc=1
 				break
@@ -968,6 +984,9 @@ manage_aur_install(){
 		named="${ans}"
 		
 		case "${ans}" in
+			"")
+				printf "%s\n" "${info} :: enter a name please"
+				;;
 			@(download|info|msearch|search|update|build)) 
 				rc=1
 				break
@@ -1022,10 +1041,13 @@ manage_aur_build(){
 		printf "\n"
 		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
 		printf "\n"
-			
+		
 		named="${ans}"
 		
 		case "${ans}" in
+			"")
+				printf "%s\n" "${info} :: enter a name please"
+				;;
 			@(download|info|msearch|search|update|install)) 
 				rc=1
 				break
