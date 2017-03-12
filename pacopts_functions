@@ -495,13 +495,19 @@ cower_cmd(){
 install_scheme(){
 	
 	local named scheme_functions
-	local -a installed_yet installed_version aur_version
+	local -a installed_yet installed_version aur_version exist
 	
 	named="${1}"
 	
 	installed_yet=$(pacman -Qsq ${named})
 	installed_version=$(expac -Q %v ${named}|sed "s:-:.:")
 	aur_version=$(cower -i ${named} --format=%v|sed "s:-:.:")
+	exist=( $(cower_cmd "-sq" ${named}) )
+	
+	if ! check_elements "${named}" ${exist[@]}; then
+		printf "%s\n" "${info} :: ${bold}${named}${reset} doesn't exist"
+		return 1
+	fi
 	
 	# already installed or not
 	if (( "${#installed_yet}" )); then
@@ -540,7 +546,7 @@ install_scheme(){
 		done
 	fi
 	
-	unset named scheme_functions installed_yet installed_version aur_version
+	unset named scheme_functions installed_yet installed_version aur_version exist
 }
 
 # ${1} name of the package
