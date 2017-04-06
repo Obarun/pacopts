@@ -271,19 +271,20 @@ check_args(){
 	unset what element
 }
 
+
 line_u(){
 	local named_ directory_ optdirectory_ optdirectory_v uidgid optgid optgid_v optuid optuid_v comment_ optcomment optcomment_v
 
 	check_args "${line}"
 	
-	if [[ -z "${#directory_}" ]]; then
+	if [[ -z "${directory_}" ]]; then
 		optdirectory="-d"
 		optdirectory_v="/"
 	else
 		optdirectory="-d"
 		optdirectory_v="${directory_}"
 	fi
-	if [[ -z "${#uidgid}" ]]; then
+	if [[ -z "${uidgid}" ]]; then
 		optgid=""
 		optgid_v=""
 		optuid=""
@@ -308,7 +309,7 @@ line_u(){
 	else
 		echo_display " Creating group ${named_} with the option(s):"
 		echo_display " ${optgid} ${optgid_v}" 
-		groupadd -r "${optgid}" "${optgid_v}" "${named_}" || die " Impossible to create group ${named_}"
+		groupadd -r ${optgid} ${optgid_v} ${named_} || die " Impossible to create group ${named_}"
 	fi
 	
 	getent passwd ${named_} &>/dev/null
@@ -317,7 +318,11 @@ line_u(){
 	else
 		echo_display " Creating user ${named_} with the option(s):"
 		echo_display " ${optuid} ${optuid_v} ${optgid} ${optgid_v} ${optdirectory} ${optdirectory_v} ${optcomment} ${optcomment_v} -s /sbin/nologin"
-		useradd -r "${optuid}" "${optuid_v}" "${optgid}" "${optgid_v}" "${optdirectory}" "${optdirectory_v}" "${optcomment}" "${optcomment_v}" -s /sbin/nologin "${named_}"	|| die " Impossible to create user ${named_}"
+		if [[ -z "${comment_}" ]]; then
+			useradd -r ${optuid} ${optuid_v} ${optgid} ${optgid_v} ${optdirectory} ${optdirectory_v} -s /sbin/nologin ${named_}	|| die " Impossible to create user ${named_}"
+		else
+			useradd -r ${optuid} ${optuid_v} ${optgid} ${optgid_v} ${optdirectory} ${optdirectory_v} "${optcomment}" "${optcomment_v}" -s /sbin/nologin ${named_}	|| die " Impossible to create user ${named_}"
+		fi
 	fi
 	
 	unset named_ directory_ optdirectory_ optdirectory_v uidgid optgid optgid_v optuid optuid_v comment_ optcomment optcomment_v
@@ -345,7 +350,7 @@ line_g(){
 	else	
 		echo_display " Creating group ${named_} with the option(s):"
 		echo_display " ${optgid} ${optgid_v}"
-		groupadd -r "${optgid}" "${optgid_v}" "${named_}" || die " Impossible to create group ${named_}"
+		groupadd -r ${optgid} ${optgid_v} ${named_} || die " Impossible to create group ${named_}"
 	fi
 	
 	unset uidgid optgid optgid_v optuid optuid_v named_
@@ -387,17 +392,21 @@ line_m(){
 	getent group ${group_g} &>/dev/null
 	if [[ $? -ne 0 ]]; then
 		echo_info " group ${group_g} does not exist, create it"
-		groupadd -r "${optgid}" "${optgid_v}" "${group_g}" || die " Impossible to create group ${group_g}"
+		groupadd -r ${optgid} ${optgid_v} ${group_g} || die " Impossible to create group ${group_g}"
 	fi
 	
 	getent passwd ${named_g} &>/dev/null
 	if [[ $? -ne 0 ]]; then
 		echo_info " user ${named_g} does not exist, create it"
-		echo useradd -r "${optuid}" "${optuid_v}" "${optgid}" "${optgid_v}" "${optdirectory}" "${optdirectory_v}" "${optcomment}" "${optcomment_v}" "${named_g}" || die " Impossible to create user ${named_g}"
+		if [[ -z "${comment_}" ]]; then
+			useradd -r ${optuid} ${optuid_v} ${optgid} ${optgid_v} ${optdirectory} ${optdirectory_v} ${named_g} || die " Impossible to create user ${named_g}"
+		else
+			useradd -r ${optuid} ${optuid_v} ${optgid} ${optgid_v} ${optdirectory} ${optdirectory_v} "${optcomment}" "${optcomment_v}" ${named_g} || die " Impossible to create user ${named_g}"
+		fi
 	fi
 	
 	echo_display " Add user ${named_g} to group ${group_g}"
-	gpasswd -a "${named_g}" "${group_g}" || die " Impossible to add ${named_g} to group ${group_g}"
+	gpasswd -a ${named_g} ${group_g} || die " Impossible to add ${named_g} to group ${group_g}"
 	
 	unset named_g group_g uidgid optgid optgid_v optuid optuid_v directory_ optdirectory_ optdirectory_v comment_ optcomment optcomment_v
 }
