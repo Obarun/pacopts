@@ -7,23 +7,6 @@
 
 shellopts_set_unset "extglob" 0
 
-sourcing(){
-	
-	local list
-	
-	for list in /usr/lib/obarun/common_functions /etc/obarun/pacopts.conf; do
-		if [[ -f "${list}" ]]; then
-			source "${list}"
-		else
-			echo_error " Missing file : ${list}"
-			exit	
-		fi
-	done
-	
-	unset list
-}
-#sourcing
-
 COWER_CONFIG="$HOME/.config/cower/config"
 SP="---" # character to use to know if the commandline on manage_aur_* is a list or not
 

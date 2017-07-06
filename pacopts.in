@@ -12,7 +12,7 @@ sourcing(){
 	
 	local list
 	
-	for list in /usr/lib/obarun/{common_functions,pacopts_functions} /etc/obarun/pacopts.conf; do
+	for list in /etc/obarun/pacopts.conf /usr/lib/obarun/{common_functions,pacopts_functions}; do
 		if [[ -f "${list}" ]]; then
 			source "${list}"
 		else
