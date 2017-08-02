@@ -1,4 +1,10 @@
-#!/bin/bash
+#!/usr/bin/bash
+#
+# Authors:
+# Eric Vidal <eric@obarun.org>
+#
+# Copyright (C) 2015-2017 Eric Vidal <eric@obarun.org>
+#
 # This script is under license BEER-WARE
 # "THE BEER-WARE LICENSE" (Revision 42):
 # <eric@obarun.org> wrote this file.  As long as you retain this notice you
@@ -12,11 +18,11 @@ sourcing(){
 	
 	local list
 	
-	for list in /etc/obarun/pacopts.conf /usr/lib/obarun/{common_functions,pacopts_functions}; do
+	for list in /etc/obarun/pacopts.conf /usr/lib/obarun/{util.sh,pacopts.sh}; do
 		if [[ -f "${list}" ]]; then
 			source "${list}"
 		else
-			echo_error " Missing file : ${list}"
+			out_error "Missing file : ${list}"
 			exit	
 		fi
 	done
