@@ -118,18 +118,14 @@ line_u(){
 	fi
 		
 	getent group ${named_} &>/dev/null
-	if [[ $? -eq 0 ]]; then
-		out_info "group ${named_} already exist, nothing to do"
-	else
+	if [[ $? -ne 0 ]]; then
 		out_action "Creating group ${named_} with the option(s):"
 		out_action "-r ${optgid} ${optgid_v}" 
 		groupadd -r ${optgid} ${uidgid} ${named_} || die " Impossible to create group ${named_}"
 	fi
 	
 	getent passwd ${named_} &>/dev/null
-	if [[ $? -eq 0 ]]; then
-		out_info "user ${named_} already exist, nothing to do"
-	else
+	if [[ $? -ne 0 ]]; then
 		out_action "Creating user ${named_} with the option(s):"
 		if [[ -z "${comment_}" ]]; then
 			if [[ -z "${optgid}" ]]; then
@@ -160,9 +156,7 @@ line_g(){
 	fi
 	
 	getent group ${named_} &>/dev/null
-	if [[ $? -eq 0 ]]; then
-		out_info "group ${named_} already exist, nothing to do"
-	else	
+	if [[ $? -ne 0 ]]; then
 		out_action "Creating group ${named_} with the option(s):"
 		out_action "-r ${optgid} ${uidgid} ${named_}"
 		groupadd -r ${optgid} ${uidgid} ${named_} || die " Impossible to create group ${named_}"
