@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@BINDIR@/sh
 # This is a reimplementation of the systemd tmpfiles.d code
 # Control creation, deletion, and cleaning of volatile and temporary files
 #
