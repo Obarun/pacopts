@@ -77,26 +77,26 @@ for download. A special case exist for install, you need to enter in.
 +
 The interactive menu displayed look like this :
 +
-	Manage *info* :: enter a name >
+	Manage info : : enter a name >
 +
 The bold word show you what command you are currently managing, in this
 case : info. You can switch between command at every time entering the
 desired command. The space between :: and > is used by pacopts to give/ask
 you some informations when is needed like overwrite or not a PKGBUILD. 
-
++
 Every command can be apply for a single package or for a list of packages. 
 The script look forward a triple dash to define the list e.g :
 +		
-	Manage *info* :: enter a name > retrovol clipit ---
+	Manage info : : enter a name > retrovol clipit ---
 +
 Without this regex only the first name is took. A whitespace need to be
 present before and after the triple dash.
-
++
 The script accept any extra operation coming from cower (see man cower) 
 except for the command build and install e.g :
 +	
-	Manage *info* :: enter a name > retrovol --format=%D
-	Manage *info* :: enter a name > retrovol clipit --- --format=%D
+	Manage info : : enter a name > retrovol --format=%D
+	Manage info : : enter a name > retrovol clipit --- --format=%D
 +
 The cower operation help can be called under the command info, search, 
 msearch, download, update by entering '-h'.
