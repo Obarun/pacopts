@@ -8,5 +8,5 @@ Target = usr/lib/tmpfiles.d/*.conf
 Description = Creating temporary files ...
 When = PostTransaction
 Depends = pacopts
-Exec = /usr/lib/obarun/tmpfiles.sh --create
+Exec = /etc/s6/data/scripts/tmpfiles.sh --create
 NeedsTargets
