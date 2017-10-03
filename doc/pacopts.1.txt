@@ -1,0 +1,165 @@
+pacopts(1)
+==========
+
+Name
+----
+pacopts - system maintainer helper
+
+Synopsis
+--------
+'pacopts' <operation> [ target ]
+
+Description
+-----------
+Pacopts is a  utility script written in bash which helps you to find the 
+origin of the repositories for installed packages, to maintain the system
+automatically for somes repetitives operations by wrapping
+{sysusers,tmpfiles}.d coming from systemd and to maintain/manage AUR 
+packages using Cower software.
+
+Operations
+----------
+*origin*::
+
+	Check origin of all installed packages coming from a given 'target'
+	where 'target' can be all repositories set in pacman.conf. Pacman
+	queries versions of packages; not the origin of packages. For 
+	instance a identical package with the same version on different 
+	repositories, pacman won't know where the package came from. The 
+	version of packages, or a least the release, need to be different to
+	let pacman to find the good package. For example, if you build some 
+	package from abs and you don't change the version/release, pacman 
+	will not find the origin repository and obviously pacopts too.
+
+*applysys*::
+	
+	Parse 'target' file where 'target' can be found at 
+	/usr/lib/sysusers.d, /run/sysusers.d, /etc/sysusers.d. 
+	This is a sysusers.d wrapper for file used by systemd to create group
+	and user at package installation. If 'target' is blank, pacopts will
+	parse all founded file on thoses directories. 'target' can be a list. 
+	The 'target' to parse and apply need to comport the .conf extension.
+	Example to parse and apply 'target' :
++		
+	pacopts applysys nbd.conf virtualbox.conf
++
+Pacopts provide an hook for pacman which run this operation automatically
+at the package installation. This hook is installed at 
+/usr/share/libalpm/hooks/applysys.hook. If you do not want to let pacman
+using this operation at package installation, just remove this file from
+your system.
+
+*applytmp*::
+	
+	This is a tmpfiles.d wrapper for file used by systemd to create
+	directory at boot time. This operation doesn't accept any 'target'. 
+	Pacopts call the script written by Robin H Johnson <robbat2@gentoo.org>
+	which parse and apply all files found at /usr/lib/tmpfiles.d. 
+	This operation is automatically made by s6-boot at the booting time.
+	Pacopts provide an hook for pacman which run this operation 
+	automatically at the package installation. This hook is installed at
+	/usr/share/libalpm/hooks/applytmp.hook. If you do not want to let 
+	pacman using this operation at package installation, just remove this
+	file from your system.
+
+*aur*::
+
+	Maintain/install package(s) coming from AUR. This operation prompt
+	you an interactive menu where 'target' command can be info, search, 
+	msearch, download, update, build, install, quit (see below).
+	This operation *must be* run with normal user to avoid trouble on
+	your system when a package is builded. A file $HOME/.config/cower/config
+	*must exist* even it empty. This file can be a simple copy of
+	/usr/share/doc/cower/config cower configuration file.
++
+The 'target' can be called by the first letter of the command e.g. d
+for download. A special case exist for install, you need to enter in.
++
+The interactive menu displayed look like this :
++
+	Manage *info* :: enter a name >
++
+The bold word show you what command you are currently managing, in this
+case : info. You can switch between command at every time entering the
+desired command. The space between :: and > is used by pacopts to give/ask
+you some informations when is needed like overwrite or not a PKGBUILD. 
+
+Every command can be apply for a single package or for a list of packages. 
+The script look forward a triple dash to define the list e.g :
++		
+	Manage *info* :: enter a name > retrovol clipit ---
++
+Without this regex only the first name is took. A whitespace need to be
+present before and after the triple dash.
+
+The script accept any extra operation coming from cower (see man cower) 
+except for the command build and install e.g :
++	
+	Manage *info* :: enter a name > retrovol --format=%D
+	Manage *info* :: enter a name > retrovol clipit --- --format=%D
++
+The cower operation help can be called under the command info, search, 
+msearch, download, update by entering '-h'.
+
+Aur Command
+-----------
+*info*::
+	
+	Show information about package(s).
+
+*search*::
+	
+	Search package(s) in AUR repositories.
+
+*msearch*::
+	
+	Search for package(s) maintained by a named maintainer. This is a 
+	synonym for searching with --by=maintainer.
+
+*download*::
+	
+	Download the PKGBUILD of the package(s). The working directory where
+	the PKGBUILD is downloaded is set by the variable TargetDir at 
+	$HOME/.config/cower/config file. If this variable is empty, /tmp is 
+	picked by default.
+
+*update*::
+	
+	Check packages for updates in the AUR. Without any 'arguments', all 
+	installed packages coming from AUR will be checked. With all as
+	'arguments', all installed packages coming from AUR will be updated
+	on your system, it means : downloaded, builded, installed. 
+	The dependencies is recursively checked. Examples :
+		
+		pacopts update 
+		pacopts update all
+		pacopts update retrovol clipit ---
+
+*build*::
+	
+	Download the PKGBUILD of the package(s) then build it. 
+	The AUR dependencies for the given package(s) is not checked. 
+	The working directory where the PKGBUILD is downloaded is set by the
+	variable TargetDir at $HOME/.config/cower/config file. If this 
+	variable is empty, /tmp is picked by default.
+
+*install*::
+	
+	Download, build and install the given package(s). If a dependency 
+	coming from AUR is detected, the script run again the same scheme 
+	(download, build, install) for the dependency. This system is done 
+	recursively to find any AUR dependencies for the main package(s).
+
+Files
+-----
+/etc/obarun/pacopts.conf
+	Configuration files for pacopts.
+
+$HOME/.config/cower/config
+	Configuration files for cower. This file is a simple copy of
+	/usr/share/doc/cower/config. It can be empty too but it need to be
+	present.
+
+Authors
+-------
+Eric Vidal <eric@obarun.org>
