@@ -1,0 +1,16 @@
+Changelog for pacopts
+
+In 0.1.2
+--------
+	
+	- Pass to ISC license
+	- Sysusers.sh : only output if it do something, allow list without 
+	double-quote, parse all files coming from usr/lib,run/,etc/sysusers.d
+	directories in order of preference.
+	- Tmpfiles.sh : this scripts is now installed by s6-boot and applied
+	at boot time.
+	- Add doc directory for manpages
+	- Add Makefile
+	- Pacopts.conf : Remove the variable SYS_PATH which is don't used 
+	anymore.
+	- Bug fix.
