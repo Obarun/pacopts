@@ -14,7 +14,7 @@ all: doc
 
 install: all
 	
-	for i in $(FILES) $(SCRIP); do \
+	for i in $(FILES) $(SCRIPTS); do \
 		sed -i 's,@BINDIR@,$(BINDIR),' $$i; \
 	done
 	
