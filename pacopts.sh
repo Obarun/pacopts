@@ -50,7 +50,7 @@ ${bold}args :${reset}
 	
     for applysys :
         name of the file to parse.
-        can be a list e.g. "nbd.conf qemu.conf"
+        can be a list e.g. nbd.conf qemu.conf
     
     for applytmp :
         this option do not accept any args.
