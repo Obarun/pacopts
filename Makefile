@@ -23,7 +23,7 @@ install: all
 	install -Dm 0644 pacopts.conf $(DESTDIR)/etc/obarun/pacopts.conf
 	
 	for i in $(SCRIPTS); do \
-		install -Dm 0755 $$i $(DESTDIR)/usr/lib/obarun/pacopts/$$i; \
+		install -Dm 0755 $$i $(DESTDIR)/usr/lib/obarun/$$i; \
 	done
 	
 	for i in applytmp.hook applysys.hook; do \
