@@ -177,5 +177,5 @@ check_package(){
 ##				TMPFILE FUNCTION
 
 tmpfiles(){
-	/usr/lib/obarun/tmpfiles.sh --create
+	/etc/s6/data/scripts/tmpfiles.sh --create
 }
