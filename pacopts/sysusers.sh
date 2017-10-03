@@ -8,57 +8,77 @@
 # This file may not be copied, modified, propagated, or distributed
 # except according to the terms contained in the LICENSE file.
 
-# ${1} path to the file
-# ${2} file to parse, can be a list e.g. "nbd.conf quemu.conf"
-parse_file(){
-	
-	local tidy_loop path_file check parse_check
-	local -a named
-	
-	path_file="${1}"
-	named=( "${2}" )
-	
-	for tidy_loop in ${path_file}/${named[@]}; do
-		
-		tidy_loop=${tidy_loop##*/}
+SYS_PATH=( "/etc/sysusers.d" "/run/sysusers.d" "/usr/lib/sysusers.d" )
+SYS_NAME=""
+SYS_RESULT=""
 
-		while read check; do
+check_elements(){
+	for e in "${@:2}"; do [[ $e == $1 ]] && return 0; done; return 1;
+	unset e
+}
+check_file(){
+	local tidy_loop conf
 	
-			while read -d " " parse_check;do 
-				case $parse_check in 
-					u|g|m|r)
-						parse_line "${parse_check}" "${check} "
-						;;
-					*) continue ;;
-				esac
-			done <<< "${check}"
+	for tidy_loop in ${SYS_PATH[@]}; do
+		if [[ -d "${tidy_loop}" ]]; then
+			for conf in "${tidy_loop}"/*.conf ; do
+				check_elements ${conf##*/} ${SYS_NAME[@]}
+				if (( $? )); then
+					SYS_NAME+=("${conf##*/}")
+				fi
+			done
+		fi
+	done
 	
-		done < "${path_file}/${tidy_loop}"
-	
-	done 
-	
-	unset named tidy_loop path_file check parse_check
+	unset tidy_loop conf
+}
+check_path(){
+	local path tidy_loop
+	for path in ${SYS_PATH[@]}; do
+		for tidy_loop in ${SYS_NAME[@]}; do
+			if [[ -f "${path}/${tidy_loop}" ]]; then
+				check_elements "${tidy_loop}" ${SYS_RESULT[@]##*/}
+				if (( $? ));then
+					SYS_RESULT+=("${path}/${tidy_loop}")
+				fi
+			fi
+		done
+	done
+	unset path tidy_loop
 }
 
-# {1} sysusers options : mean u,g,m or r
-# {2} complete line to parse
-parse_line(){
-	 
-	opts="${1}"
-	line="${2}"
+# ${1} file to parse, can be a list e.g. nbd.conf quemu.conf
+parse_file(){
+	local sys line
 	
-	case "${opts}" in
-		u) 	line_u		
-			;;
-		g) 	line_g
-			;;
-		m) 	line_m
-			;;
-		r)	line_r
-			;;
-	esac	
+	if [[ -z "${1}" ]];then
+		check_file
+		check_path
+	else
+		SYS_NAME="${@}"
+		check_path
+	fi
+
+	#echo SYS_RESULT::${SYS_RESULT[@]}
+
+	for sys in ${SYS_RESULT[@]}; do
+		while read line; do
+			case ${line:0:1} in
+				u) line_u "${line}"
+					;;
+				g) line_g "${line}"
+					;;				
+				m) line_m "${line}"
+					;;
+				r) line_r "${line}"
+					;;
+				*) continue
+					;;
+			esac
+		done < "${sys}"
+	done
 	
-	
+	unset sys line
 }
 
 # {1} line to parse
@@ -104,7 +124,8 @@ check_args(){
 
 line_u(){
 	local named_ directory_ optdirectory_ optdirectory_v uidgid optgid optgid_v optuid optuid_v comment_ optcomment optcomment_v
-
+	local line="${1}"
+	
 	check_args "${line}"
 	
 	optdirectory="-d${directory_:-/}"
@@ -119,33 +140,32 @@ line_u(){
 		
 	getent group ${named_} &>/dev/null
 	if [[ $? -ne 0 ]]; then
-		out_action "Creating group ${named_} with the option(s):"
-		out_action "-r ${optgid} ${optgid_v}" 
+		out_action "groupadd -r ${optgid} ${uidgid}" 
 		groupadd -r ${optgid} ${uidgid} ${named_} || die " Impossible to create group ${named_}"
 	fi
 	
 	getent passwd ${named_} &>/dev/null
 	if [[ $? -ne 0 ]]; then
-		out_action "Creating user ${named_} with the option(s):"
 		if [[ -z "${comment_}" ]]; then
 			if [[ -z "${optgid}" ]]; then
 				optgid="-g ${named_}"
 			fi
-			out_action "-r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} -s /sbin/nologin ${named_}"
+			out_action "useradd -r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} -s /sbin/nologin ${named_}"
 			useradd -r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} -s /sbin/nologin ${named_} || die " Impossible to create user ${named_}"
 		else
 			if [[ -z "${optgid}" ]]; then
 				optgid="-g ${named_}"
 			fi
-			out_action "-r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} ${optcomment} -s /sbin/nologin ${named_}"
+			out_action "useradd -r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} ${optcomment} -s /sbin/nologin ${named_}"
 			useradd -r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} "${optcomment}" -s /sbin/nologin ${named_}	|| die " Impossible to create user ${named_}"
 		fi
 	fi
 	
-	unset named_ directory_ optdirectory_ optdirectory_v uidgid optgid optgid_v optuid optuid_v comment_ optcomment optcomment_v
+	unset line named_ directory_ optdirectory_ optdirectory_v uidgid optgid optgid_v optuid optuid_v comment_ optcomment optcomment_v
 }
 line_g(){
 	local uidgid optgid optgid_v optuid optuid_v named_
+	local line="${1}"
 	
 	check_args "${line}"
 	
@@ -157,16 +177,16 @@ line_g(){
 	
 	getent group ${named_} &>/dev/null
 	if [[ $? -ne 0 ]]; then
-		out_action "Creating group ${named_} with the option(s):"
-		out_action "-r ${optgid} ${uidgid} ${named_}"
+		out_action "groupadd -r ${optgid} ${uidgid} ${named_}"
 		groupadd -r ${optgid} ${uidgid} ${named_} || die " Impossible to create group ${named_}"
 	fi
 	
-	unset uidgid optgid optgid_v optuid optuid_v named_
+	unset line uidgid optgid optgid_v optuid optuid_v named_
 }
 
 line_m(){
 	local named_g group_g uidgid optgid optgid_v optuid optuid_v directory_ optdirectory_ optdirectory_v comment_ optcomment optcomment_v
+	local line="${1}"
 	
 	check_args "${line}"
 	
@@ -186,25 +206,23 @@ line_m(){
 		
 	getent group ${group_g} &>/dev/null
 	if [[ $? -ne 0 ]]; then
-		out_action "Creating group ${group_g} with the option(s):"
-		out_action "-r ${optgid} ${uidgid} ${group_g}"
+		out_action "groupadd -r ${optgid} ${uidgid} ${group_g}"
 		groupadd -r ${optgid} ${uidgid} ${group_g} || die " Impossible to create group ${group_g}"
 	fi
 	
 	getent passwd ${named_g} &>/dev/null
 	if [[ $? -ne 0 ]]; then
-		out_action "Creating user ${named_g} with the option(s):"
 		if [[ -z "${comment_}" ]]; then
 			if [[ -z "${optgid}" ]]; then
 				optgid="-g ${group_g}"
 			fi
-			out_action "-r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} ${named_g}"
+			out_action "useradd -r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} ${named_g}"
 			useradd -r ${optuid} ${uidgid} ${optgid} ${uidgid} ${optdirectory} ${named_g} || die " Impossible to create user ${named_g}"
 		else
 			if [[ -z "${optgid}" ]]; then
 				optgid="-g ${group_g}"
 			fi
-			out_action "-r ${optuid} ${uidgid} ${optgid} ${uidgid}  ${optdirectory_v} ${optcomment} ${named_g}"
+			out_action "useradd -r ${optuid} ${uidgid} ${optgid} ${uidgid}  ${optdirectory_v} ${optcomment} ${named_g}"
 			useradd -r ${optuid} ${uidgid} ${optgid} ${uidgid}  ${optdirectory_v} "${optcomment}" ${named_g} || die " Impossible to create user ${named_g}"
 		fi
 	fi
@@ -212,7 +230,7 @@ line_m(){
 	out_action "Add user ${named_g} to group ${group_g}"
 	gpasswd -a ${named_g} ${group_g} || die " Impossible to add ${named_g} to group ${group_g}"
 	
-	unset named_g group_g uidgid optgid optgid_v optuid optuid_v directory_ optdirectory_ optdirectory_v comment_ optcomment optcomment_v
+	unset line named_g group_g uidgid optgid optgid_v optuid optuid_v directory_ optdirectory_ optdirectory_v comment_ optcomment optcomment_v
 }
 
 line_r(){
