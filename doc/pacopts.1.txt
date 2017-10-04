@@ -34,20 +34,9 @@ Operations
 *applysys*::
 	
 	Parse 'target' file where 'target' can be found at 
-	/usr/lib/sysusers.d, /run/sysusers.d, /etc/sysusers.d. 
-	This is a sysusers.d wrapper for file used by systemd to create group
-	and user at package installation. If 'target' is blank, pacopts will
-	parse all founded file on thoses directories. 'target' can be a list. 
-	The 'target' to parse and apply need to comport the .conf extension.
-	Example to parse and apply 'target' :
-+		
-	pacopts applysys nbd.conf virtualbox.conf
-+
-Pacopts provide an hook for pacman which run this operation automatically
-at the package installation. This hook is installed at 
-/usr/share/libalpm/hooks/applysys.hook. If you do not want to let pacman
-using this operation at package installation, just remove this file from
-your system.
+	/usr/lib/sysusers.d, /run/sysusers.d, /etc/sysusers.d. This is 
+	operation use the applysys script. see man(1) applysys for more 
+	details.
 
 *applytmp*::
 	
@@ -159,6 +148,10 @@ $HOME/.config/cower/config
 	Configuration files for cower. This file is a simple copy of
 	/usr/share/doc/cower/config. It can be empty too but it need to be
 	present.
+
+See Also
+--------
+*applysys*(1)
 
 Authors
 -------

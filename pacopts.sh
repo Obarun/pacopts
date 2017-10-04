@@ -173,9 +173,3 @@ check_package(){
 	
 	unset named item repo both false repo_db
 }
-
-##				TMPFILE FUNCTION
-
-tmpfiles(){
-	/etc/s6/data/scripts/tmpfiles.sh --create
-}

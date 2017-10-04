@@ -26,10 +26,8 @@ install: all
 		install -Dm 0755 $$i $(DESTDIR)/usr/lib/obarun/$$i; \
 	done
 	
-	for i in applytmp.hook applysys.hook; do \
-		install -Dm 0644 $$i $(DESTDIR)/usr/share/libalpm/hooks/$$i; \
-	done
-	
+	install -Dm 0644 applytmp.hook $(DESTDIR)/usr/share/libalpm/hooks/applytmp.hook
+		
 	install -Dm644 doc/pacopts.1 $(DESTDIR)/usr/share/man/man1/pacopts.1
 		
 	install -Dm644 LICENSE $(DESTDIR)/usr/share/licenses/$(PKGNAME)/LICENSE

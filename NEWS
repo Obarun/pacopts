@@ -1,5 +1,11 @@
 Changelog for pacopts
 
+In 0.1.3
+--------
+	
+	- applysys operation : This operation use now applysys script. The 
+	hook in installed by this script.
+	
 In 0.1.2
 --------
 	

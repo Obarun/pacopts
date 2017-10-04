@@ -53,10 +53,10 @@ case "${operation}" in
 		check_package "${target}"
 		;;
 	applysys)
-		parse_file "${target_opts[@]}"
+		/usr/bin/applysys "${target_opts[@]}"
 		;;
 	applytmp)
-		tmpfiles
+		/etc/s6/data/scripts/tmpfiles.sh --create
 		;;
 	aur)
 		manage_aur 0 "${target}"
