@@ -259,10 +259,11 @@ scheme_install(){
 	printf "\n"
 	
 	real_name=$(cower -i ${named} --format=%b)
+	cache=($(pacman --verbose 2>/dev/null|awk -F"Cache Dirs: " '{print $2}'))
 	
 	pushd "${real_name}" &>/dev/null
 	
-	su -c "pacman ${OPTS_PACMAN[@]} ${real_name}-*.pkg.tar.xz" || return 1
+	su -c "pacman ${OPTS_PACMAN[@]} ${real_name}-*.pkg.tar.xz; cp -f ${real_name}-*.pkg.tar.xz ${cache}" || return 1
 	
 	popd &>/dev/null
 	
