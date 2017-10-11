@@ -120,9 +120,9 @@ Aur Command
 	on your system, it means : downloaded, builded, installed. 
 	The dependencies is recursively checked. Examples :
 		
-		pacopts update 
-		pacopts update all
-		pacopts update retrovol clipit ---
+		Manage update : : enter a name >
+		Manage update : : enter a name >all
+		Manage update : : enter a name >retrovol clipit ---
 
 *build*::
 	
