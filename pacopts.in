@@ -61,6 +61,9 @@ case "${operation}" in
 	aur)
 		manage_aur 0 "${target}"
 		;;
+	service)
+		service "${target_opts[@]}"
+		;;
 	*)
 		usage
 		exit 1

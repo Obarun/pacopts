@@ -51,6 +51,14 @@ Operations
 	pacman using this operation at package installation, just remove this
 	file from your system.
 
+*service*::
+	
+	Check if a service exist for a given 'target' where 'target' is the 
+	name of the package to check. If 'target' is empty, all installed
+	packages on the system will be checked.
+	
+'target' can be a list.
+	
 *aur*::
 
 	Maintain/install package(s) coming from AUR. This operation prompt

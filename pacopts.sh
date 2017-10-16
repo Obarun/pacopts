@@ -32,31 +32,38 @@ SP="---" # character to use to know if the commandline on manage_aur_* is a list
 usage(){
 	cat << EOF
 	
-${bold}Usage: ${0} [options] [args]${reset}
+${bold}Usage: ${0} <operation> [ target ]${reset}
 
 ${bold}options:${reset}
     
-    origin : check origin of packages
+    origin : check origin of target
     applysys : wrap up a sysusers file 
     applytmp : wrap up all tmpfiles
     aur : manage package from AUR repositories
+    service : check if a service exist for target
     
-${bold}args :${reset}
+${bold}target for:${reset}
     
-    for origin :
-        give the name of the repo to check.
-        if an empty value is detected,
-        obarun is picked by default.
+    origin :
+        Name of the repo to check.
+        If target is empty, obarun repo is
+        picked by default.
 	
-    for applysys :
-        name of the file to parse.
-        can be a list e.g. nbd.conf qemu.conf
+    applysys :
+        Name of the file to parse.
+        Can be a list e.g. nbd.conf qemu.conf
     
-    for applytmp :
-        this option do not accept any args.
+    applytmp :
+        This option do not accept any target.
         
-    for	aur :
-        this option do not accept any args.
+	aur :
+        This option do not accept any target.
+    
+    service :
+		Name of the package(s).
+		If target is empty, all installed
+		packages will be checked.
+		Can be a list e.g. cups lvm2 dbus
 EOF
 	exit 0
 }
@@ -172,4 +179,47 @@ check_package(){
 	fi
 	
 	unset named item repo both false repo_db
+}
+# ${1} list of service in fonction of the package name to find
+# can be empty
+service(){
+	local -a list_s6serv list_s6rcserv list_service list_search list_result
+	
+	list_s6serv=$(pacman -Ssq s6serv)
+	list_s6rcserv=$(pacman -Ssq s6rcserv)
+	for i in ${list_s6serv[@]} ${list_s6rcserv[@]};do
+		list_service+=("${i} $(expac "%D" ${i})") 
+	done
+	
+	if [[ -z "${1}" ]]; then
+		list_search=$(pacman -Qsq)
+	else
+		list_search=( "${@}" )
+	fi
+	
+	for search in ${list_search[@]}; do
+		for check in ${!list_service[@]};do
+			while read subarray; do
+				
+				array_line=( ${subarray} )
+			
+				if [[ "${array_line[1]}" == "${search}" ]]; then
+					out_action "${array_line} is a service for $search"
+					list_result+=("${array_line[0]}")
+					break
+				fi
+				
+			done <<< ${list_service[$check]}
+		done		
+	done
+	
+	if (( "${#list_result}" )); then
+		echo "Do you want to install these service(s)? [y|n]"
+		reply_answer
+		if (( ! $? )); then
+			pacman -S "${list_result[@]}"
+		fi
+	fi
+	
+	unset list_s6serv list_s6rcserv list_service list_search list_result
 }
