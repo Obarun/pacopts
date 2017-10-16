@@ -72,68 +72,58 @@ EOF
 
 # ${1} name of the repos to use
 find_origin(){
-	local ori check ver repo_origin parse_ori parse_ori_repo parse_ori_name parse_ori_version
+	local repo_origin check ori ori_line ori_name tidy_loop
 	
 	repo_origin="${1}"
 	
-	for check in ${both[@]};do 
+	for check in ${!both[@]};do
 		
-		if [[ "$check" != obarun-@(mkiso|install|build) ]]; then
+		printf "\r${bold}::${reset} Check ${bold}%s${reset} package" "${both[$check]}"
+		tput el #return to the last line
 		
-			printf "\r${bold}     -> Check %s package${reset}" "$check"
-			tput el #return to the last line
-		
-			while read ori; do
+		while read ori; do
 			
-				parse_ori=${ori}
-				
-				#retrieve only the repo
-				parse_ori_repo=${parse_ori%%/*}
+			ori_line=( ${ori} )
+			# syntax of ori_line is 
+			# repo/name version (group) [installed]
+			# if the package doesn't come from the repo the syntax is
+			# repo/name version (group) [installed: version]
+			# if the package is not installed the syntax is
+			# repo/name version (group)
 			
-				# retrieve only the name
-				parse_ori_name=${parse_ori##*/}
-				parse_ori_name=${parse_ori_name%%' '*}
+			# ${#ori_line[@]} < 2 means field [installed] not present
+			# so the package is not installed
+			# skip it
+			if [[ ${#ori_line[@]} > 2 ]]; then
+				ori_name=${ori_line##*/}
+				ori_name=${ori_name%%' '*}
 				
-				#retrieve only the version
-				#if the value not return a version format then the package do not come from $repo_origin
-				if [[ "${parse_ori_name}" == "$check" ]]; then ## avoid search regex on packages description
-					parse_ori_version=${parse_ori##*[}
-					ver=$(grep ":" <<< "${parse_ori_version}")
-					
-					if (( "${#ver}" ));then
-						parse_ori_version=${parse_ori_version##*' '}
-						parse_ori_version=${parse_ori_version%%]*}
-					else
-						unset parse_ori_version
-					fi
-					unset ver
+				# only enter on the next loop if package = package searched
+				# if not skip it.
+				if [[ "${ori_name}" == "${both[check]}" ]]; then
+					for ((tidy_loop=0;tidy_loop<${#ori_line[@]};tidy_loop++));do
+						if [[ "${ori_line[$tidy_loop]}" =~ ":" ]] && [[ "${tidy_loop}" != "1" ]]; then
+							if [[ "${both[$check]}" != obarun-@(mkiso|install|install-themes|build) ]]; then
+								printf "\r${bred}::${reset} package ${bold}%s${reset} do not come from ${bold}${repo}${reset} repository" "${both[$check]}"
+								printf "\n"
+								false+=("${both[$check]}")
+								# save cursor position
+								tput sc
+								break
+							fi
+						fi
+					done
 				fi
-				
-				check_var(){
-					printf "\n"
-					echo ori :: ${ori}
-					echo parse_ori :: ${parse_ori}
-					echo parse_ori_repo :: ${parse_ori_repo%%/}
-					echo parse_ori_name :: ${parse_ori_name}
-					echo ver :: ${ver}
-					echo parse_ori_version :: ${parse_ori_version}
-				}
-				#check_var
-				
-				# version is not empty, the package installed do not come from $repo_origin
-				if (( ${#parse_ori_version} )); then
-					false+=("$check")
-				fi
-				
-				unset parse_ori parse_ori_repo parse_ori_name parse_ori_version
-			
-			done < <(pacman -Ss "$check" | grep "${repo_origin}")
-		fi
+				unset ori_line ori_name tidy_loop
+			fi
+		done < <(pacman -Ss "${both[$check]}" | grep "${repo_origin}")
 	done
-	 
-	printf "\n${bold}==>> Finished ${reset}\n"
-
-	unset ori check ver repo_origin parse_ori parse_ori_repo parse_ori_name parse_ori_version
+	#return at the previous cursor position
+	tput rc
+	# erase the line
+	tput ed
+	
+	unset repo_origin check ori ori_line ori_name tidy_loop
 }
 
 # ${1} name of the repos to use
@@ -159,17 +149,11 @@ check_package(){
 		done
 	done < <(pacman -Qsq)
 	
-	out_action "Verifying ${repo} packages repository"
-	
 	#check origin of package
 	find_origin "${repo}"
 	
 	if (( "${#false}" )); then 
-		printf "${byellow}==>> These/those package(s) do not come from ${repo} repository :${reset}\n" 
-		for no in "${false[@]}"; do
-			echo_bold "	-> $no"
-		done
-		out_action "Do you want to replace this/those package(s) [y|n]"
+		out_action "Do you want to replace this package(s)? [y|n]"
 		reply_answer
 		if (( ! $? )); then
 			for i in "${false[@]}"; do
