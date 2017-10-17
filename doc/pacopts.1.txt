@@ -56,7 +56,9 @@ Operations
 	Check if a service exist for a given 'target' where 'target' is the 
 	name of the package to check. If 'target' is empty, all installed
 	packages on the system will be checked.
-	
+	+
+This 'operation' only return service(s) package which are not installed yet.
+	+
 'target' can be a list.
 	
 *aur*::
