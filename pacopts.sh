@@ -130,7 +130,7 @@ find_origin(){
 # if empty, obarun is set by default
 check_package(){
 	
-	local named item repo
+	local named item repo tidy_loop
 	local -a both false repo_db
 	
 	# pick obarun by default
@@ -156,24 +156,29 @@ check_package(){
 		out_action "Do you want to replace this package(s)? [y|n]"
 		reply_answer
 		if (( ! $? )); then
-			for i in "${false[@]}"; do
-				pacman -S "${repo}"/$i
+			for tidy_loop in "${false[@]}"; do
+				pacman -S "${repo}"/"${tidy_loop}"
 			done
 		fi
 	fi
 	
-	unset named item repo both false repo_db
+	unset named item repo both false repo_db tidy_loop
 }
 # ${1} list of service in fonction of the package name to find
 # can be empty
 service(){
-	local -a list_s6serv list_s6rcserv list_service list_search list_result
+	local -a list_s6serv list_s6rcserv list_service list_search list_result tidy_loop
 	
 	list_s6serv=$(pacman -Ssq s6serv)
 	list_s6rcserv=$(pacman -Ssq s6rcserv)
-	for i in ${list_s6serv[@]} ${list_s6rcserv[@]};do
-		list_service+=("${i} $(expac "%D" ${i})") 
+	for tidy_loop in ${list_s6serv[@]} ${list_s6rcserv[@]};do
+		printf "\r${bold}::${reset} Check dependencies for ${bold}%s${reset} service" "${tidy_loop}"
+		tput el 1 #return to the last line
+		list_service+=("${tidy_loop} $(expac -S "%D" ${tidy_loop})")
+		unset tidy_loop
 	done
+	
+	
 	
 	if [[ -z "${1}" ]]; then
 		list_search=$(pacman -Qsq)
@@ -184,24 +189,28 @@ service(){
 	for search in ${list_search[@]}; do
 		for check in ${!list_service[@]};do
 			while read subarray; do
-				
 				array_line=( ${subarray} )
-			
 				if [[ "${array_line[1]}" == "${search}" ]]; then
-					out_action "${array_line} is a service for $search"
-					list_result+=("${array_line[0]}")
-					break
+					pkg_installed=$(pacman -Qsq ${array_line[0]})
+					if [[ -z "${pkg_installed}" ]]; then
+						printf "\r"
+						tput el 1
+						printf "\r${bgreen}:: ${reset}${bold}${array_line}${reset} is a service for ${bold}$search${reset}"
+						printf "\n"
+						list_result+=("${array_line[0]}")
+					fi
 				fi
-				
 			done <<< ${list_service[$check]}
 		done		
 	done
 	
 	if (( "${#list_result}" )); then
-		echo "Do you want to install these service(s)? [y|n]"
+		out_action "Do you want to install this service(s)? [y|n]"
 		reply_answer
 		if (( ! $? )); then
-			pacman -S "${list_result[@]}"
+			for tidy_loop in "${list_result[@]}"; do
+				pacman -S "${tidy_loop}"
+			done
 		fi
 	fi
 	
