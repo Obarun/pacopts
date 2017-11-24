@@ -698,9 +698,11 @@ manage_aur_build(){
 manage_aur(){
 	
 	if [[ ! -f "${COWER_CONFIG}" ]]; then
-		out_info "A configuration file for cower need to be present at $HOME/.config/cower/"
-		out_info "Please make a copy of /usr/share/doc/cower/config file at ${COWER_CONFIG}"
-		die " Impossible to find the file ${COWER_CONFIG}"
+		mkdir -p "$HOME/.config/cower"
+		cp "/usr/share/doc/cower/config" "$HOME/.config/cower/"
+		#out_info "A configuration file for cower need to be present at $HOME/.config/cower/"
+		#out_info "Please make a copy of /usr/share/doc/cower/config file at ${COWER_CONFIG}"
+		#die " Impossible to find the file ${COWER_CONFIG}"
 	else
 		source "${COWER_CONFIG}"
 	fi
