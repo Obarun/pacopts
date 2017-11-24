@@ -44,16 +44,17 @@ choose_installer(){
 }
 
 # ${1} array to parse
-manage_aur_is_array(){
+aur_is_array(){
 	
-	local -a _array
-	_array=( ${1} )
+	local -a _array parse_ans
+	_array=( ${@} )
 
 	if check_elements "${SP}" ${_array[@]}; then
 		parse_ans=${ans[@]}
 		named=${ans[@]}
 		named=${named%%---*}
 		ans_args=${parse_ans##*---}
+		unset _array parse_ans
 		return 0
 	else
 		parse_ans=${ans[@]}
@@ -62,6 +63,7 @@ manage_aur_is_array(){
 		if [[ "${named}" == "${ans_args}" ]]; then
 			unset ans_args
 		fi
+		unset _array parse_ans
 		return 1
 	fi
 }
@@ -272,223 +274,142 @@ scheme_install(){
 	return 0
 }
 
-manage_aur_download(){
+aur_download(){
 	
-	local info named rc tidy_loop
-	local -a parse_ans ans_args ans
+	local tidy_loop
+	local -a ans_args ans named
 	
-	info="${1}"
+	ans=( "${@}" )
+	named="${ans}"
+
+	case "${ans}" in
+		"")
+			aur_download_help
+			;;
+		help)
+			aur_download_help
+			;;
+		*) 	aur_is_array "${ans[@]}"
+			if (( ! "$?" )); then
+				for tidy_loop in ${named[@]}; do
+					printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+					printf "\n"
+					cower_cmd "-d" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+					printf "\n"
+				done
+			else
+				cower_cmd "-d" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+			fi
+			;;
+	esac
 		
-	while true; do
-		
-		unset named
-		
-		printf "\n"
-		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
-		printf "\n"
-		
-		named="${ans}"
-		
-		case "${ans}" in
-			"")
-				printf "%s\n" "${info} :: enter a name please"
-				;;
-			@(info|msearch|search|update|install|build)) 
-				rc=1
-				break
-				;;
-			help)
-				manage_aur_download_help
-				;;
-			quit) 
-				exit
-				;;
-			*) 	manage_aur_is_array "${ans[@]}"
-				
-				if (( ! "$?" )); then
-					for tidy_loop in ${named[@]}; do
-						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
-						printf "\n"
-						cower_cmd "-d" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-						printf "\n"
-					done
-				else
-					cower_cmd "-d" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
-				fi
-				;;
-		esac
-	done
-	if (( $rc )); then
-		manage_aur 0 "${ans}"
-	fi
-	
-	unset info named rc parse_ans ans_args ans tidy_loop
+	unset named ans_args ans tidy_loop
 }
 
-manage_aur_info(){
+aur_info(){
 	
-	local info named rc tidy_loop
-	local -a parse_ans ans_args ans
+	local tidy_loop
+	local -a ans_args ans named
 	
-	info="${1}"
-	
-	while true; do
-		
-		unset named
-		
-		printf "\n"
-		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
-		printf "\n"
+	ans=( "${@}" )
+	named="${ans}"
 			
-		named="${ans}"
-			
-		case "${ans}" in
-			"")
-				printf "%s\n" "${info} :: enter a name please"
-				;;
-			@(download|msearch|search|update|install|build)) 
-				rc=1
-				break
-				;;
-			help)
-				manage_aur_info_help
-				;;
-			quit) 
-				exit
-				;;
-			*) 	manage_aur_is_array "${ans[@]}"
-				
-				if (( ! "$?" )); then
-					for tidy_loop in ${named[@]}; do
-						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
-						cower_cmd "-i" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-						printf "\n"
-					done
-				else
-					cower_cmd "-i" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
-				fi
-				;;
-		esac
-	done
-	if (( $rc )); then
-		manage_aur 0 "${ans}"
-	fi
+	case "${ans}" in
+		"")
+			aur_info_help
+			;;
+		help)
+			aur_info_help
+			;;
+		*) 	aur_is_array "${ans[@]}"
+			if (( ! "$?" )); then
+				for tidy_loop in ${named[@]}; do
+					printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+					printf "\n"
+					cower_cmd "-i" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+					printf "\n"
+				done
+			else
+				cower_cmd "-i" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+			fi
+			;;
+	esac
 	
-	unset info named rc parse_ans ans_args ans tidy_loop
+	unset named ans_args ans tidy_loop
 }
 
-manage_aur_msearch(){
+aur_msearch(){
 	
-	local info named rc tidy_loop
-	local -a parse_ans ans_args ans
+	local tidy_loop
+	local -a ans_args ans named
 	
-	info="${1}"
+	ans=( "${@}" )
+	named="${ans}"
 	
-	while true; do
-		
-		unset named
-		
-		printf "\n"
-		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
-		printf "\n"
-		
-		named="${ans}"
-		
-		case "${ans}" in
-			"")
-				printf "%s\n" "${info} :: enter a name please"
-				;;
-			@(download|info|search|update|install|build)) 
-				rc=1
-				break
-				;;
-			help)
-				manage_aur_msearch_help
-				;;
-			quit) 
-				exit
-				;;
-			*) 	manage_aur_is_array "${ans[@]}"
-				
-				if (( ! "$?" )); then
-					for tidy_loop in ${named[@]}; do
-						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
-						printf "\n"
-						cower_cmd "-m" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-						printf "\n"
-					done
-				else
-					cower_cmd "-m" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
-				fi
-				;;
-		esac
-	done
-	if (( $rc )); then
-		manage_aur 0 "${ans}"
-	fi
+	case "${ans}" in
+		"")
+			aur_msearch_help
+			;;
+		help)
+			aur_msearch_help
+			;;
+		*)	aur_is_array "${ans[@]}"
+			if (( ! "$?" )); then
+				for tidy_loop in ${named[@]}; do
+					printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+					printf "\n"
+					cower_cmd "-m" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+					printf "\n"
+				done
+			else
+				cower_cmd "-m" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+			fi
+			;;
+	esac
 	
-	unset info named rc parse_ans ans_args ans tidy_loop
+	unset named ans_args ans tidy_loop
 }
 
-manage_aur_search(){
+aur_search(){
 	
-	local info named rc tidy_loop
-	local -a parse_ans ans_args ans
+	local tidy_loop
+	local -a ans_args ans named
 	
-	info="${1}"
+	ans=( "${@}" )
+	named="${ans}"
+		
+	case "${ans}" in
+		"")
+			aur_search_help
+			;;
+		help)
+			aur_search_help
+			;;
+		*) 	aur_is_array "${ans[@]}"
+			if (( ! "$?" )); then
+				for tidy_loop in ${named[@]}; do
+					printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+					printf "\n"
+					cower_cmd "-s" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+					printf "\n"
+				done
+			else
+				cower_cmd "-s" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+			fi
+			;;
+	esac
 	
-	while true; do
-		
-		unset named
-		
-		printf "\n"
-		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
-		printf "\n"
-		
-		named="${ans}"
-		
-		case "${ans}" in
-			"")
-				printf "%s\n" "${info} :: enter a name please"
-				;;
-			@(download|info|msearch|update|install|build)) 
-				rc=1
-				break
-				;;
-			help)
-				manage_aur_search_help
-				;;
-			quit) 
-				exit
-				;;
-			*) 	manage_aur_is_array "${ans[@]}"
-				
-				if (( ! "$?" )); then
-					for tidy_loop in ${named[@]}; do
-						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
-						printf "\n"
-						cower_cmd "-s" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-						printf "\n"
-					done
-				else
-					cower_cmd "-s" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
-				fi
-				;;
-		esac
-	done
-	if (( $rc )); then
-		manage_aur 0 "${ans}"
-	fi
-	
-	unset info named rc parse_ans ans_args ans tidy_loop
+	unset named ans_args ans tidy_loop
 }
 
-manage_aur_update(){
+aur_update(){
 	
-	local info named rc tidy_loop pack
-	local -a parse_ans ans_args ans update_list
+	local tidy_loop pack work_dir
+	local -a ans_args ans named update_list
 	
-	info="${1}"
+	ans=( "${@}" )
+	named="${ans}"
+	
 	work_dir="${TargetDir:-/tmp}"
 	
 	check_dir "${work_dir}"
@@ -496,72 +417,49 @@ manage_aur_update(){
 		mkdir -p "${work_dir}" || die " Impossible to create the working directory"
 	fi
 	
-	while true; do
+	case "${ans}" in
+		all)
+			update_list=$(cower_cmd "-uq")
+			if (( ${#update_list} )); then
+				pushd "${work_dir}" &>/dev/null
+				for pack in ${update_list[@]}; do
+					printf "%s\n" "${info} :: ${bold}${pack}${reset}"
+					install_scheme "${pack}"
+					printf "\n"
+				done
+				popd &>/dev/null
+			else
+				printf "%s\n" "${info} :: ${bold}nothing to do${reset}"
+			fi
+			;;
+		help)
+			aur_update_help
+			;;
+		*) 	if (( ! ${#ans} )); then ## no name, so check all packages
+				cower_cmd "-u" "${OPTS_COWER[@]}"
+				continue
+			fi
+			aur_is_array "${ans[@]}"
+			if (( ! "$?" )); then
+				for tidy_loop in ${named[@]}; do
+					printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+					cower_cmd "-u" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
+					printf "\n"
+				done
+			else
+				cower_cmd "-u" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
+			fi
+			;;
+	esac
 	
-		unset named
-
-		printf "\n"
-		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
-		printf "\n"
-		
-		named="${ans}"
-		
-		case "${ans}" in
-			@(download|info|msearch|search|install|build)) 
-				rc=1
-				break
-				;;
-			all)
-				update_list=$(cower_cmd "-uq")
-				if (( ${#update_list} )); then
-					pushd "${work_dir}" &>/dev/null
-					for pack in ${update_list[@]}; do
-						printf "%s\n" "${info} :: ${bold}${pack}${reset}"
-						install_scheme "${pack}"
-						printf "\n"
-					done
-					popd &>/dev/null
-				else
-					printf "%s\n" "${info} :: ${bold}nothing to do${reset}"
-				fi
-				;;
-			help)
-				manage_aur_update_help
-				;;
-			quit) 
-				exit
-				;;
-			*) 	if (( ! ${#ans} )); then ## no name, so check all packages
-					cower_cmd "-u" "${OPTS_COWER[@]}"
-					continue
-				fi
-				manage_aur_is_array "${ans[@]}"
-				
-				if (( ! "$?" )); then
-					for tidy_loop in ${named[@]}; do
-						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
-						cower_cmd "-u" "${tidy_loop} ${ans_args[@]} ${OPTS_COWER[@]}"
-						printf "\n"
-					done
-				else
-					cower_cmd "-u" "${named[@]} ${ans_args[@]} ${OPTS_COWER[@]}"
-				fi
-				;;
-		esac
-	done
-	if (( $rc )); then
-		manage_aur 0 "${ans}"
-	fi
-	
-	unset info named rc parse_ans ans_args ans tidy_loop update_list pack
+	unset named ans_args ans tidy_loop update_list pack work_dir
 }
 
-manage_aur_install(){
+aur_install(){
 	
-	local info named rc work_dir
-	local -a parse_ans ans_args ans
+	local tidy_loop work_dir
+	local -a ans_args ans named 
 	
-	info="${1}"
 	work_dir="${TargetDir:-/tmp}"
 	
 	check_dir "${work_dir}"
@@ -569,60 +467,42 @@ manage_aur_install(){
 		mkdir -p "${work_dir}" || die " Impossible to create the working directory"
 	fi
 	
-	while true; do
-		
-		pushd "${work_dir}" &>/dev/null
-		
-		unset named
-		
-		printf "\n"
-		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
-		printf "\n"
-			
-		named="${ans}"
-		
-		case "${ans}" in
-			"")
-				printf "%s\n" "${info} :: enter a name please"
-				;;
-			@(download|info|msearch|search|update|build)) 
-				rc=1
-				break
-				;;
-			help)
-				manage_aur_install_help
-				;;
-			quit) 
-				exit
-				;;
-			*) manage_aur_is_array "${ans[@]}"
-				
-				if (( ! "$?" )); then
-					for tidy_loop in ${named[@]}; do
-						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
-						printf "\n"
-						install_scheme "${tidy_loop}"
-						printf "\n"
-					done
-				else
-					install_scheme "${named}"
-				fi
-				;;
-		esac
-	done
-	if (( $rc )); then
-		manage_aur 0 "${ans}"
-	fi
+	ans=( "${@}" )
+	named="${ans}"
 	
-	unset info named rc parse_ans ans_args ans tidy_loop work_dir
+	pushd "${work_dir}" &>/dev/null
+		
+	case "${ans}" in
+		"")
+			aur_install_help
+			;;
+		help)
+			aur_install_help
+			;;
+		*) 	aur_is_array "${ans[@]}"
+			if (( ! "$?" )); then
+				for tidy_loop in ${named[@]}; do
+					printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+					printf "\n"
+					install_scheme "${tidy_loop}"
+					printf "\n"
+				done
+			else
+				install_scheme "${named}"
+			fi
+			;;
+	esac
+	
+	popd &>/dev/null
+	
+	unset named ans_args ans tidy_loop work_dir
 }
 
-manage_aur_build(){
+aur_build(){
 	
-	local info named rc work_dir scheme
-	local -a parse_ans ans_args ans
+	local work_dir scheme
+	local -a ans_args ans named
 	
-	info="${1}"
 	work_dir="${TargetDir:-/tmp}"
 	
 	check_dir "${work_dir}"
@@ -630,127 +510,49 @@ manage_aur_build(){
 		mkdir -p "${work_dir}" || die " Impossible to create the working directory"
 	fi
 	
-	while true; do
-		
-		pushd "${work_dir}" &>/dev/null
-		
-		unset named
-		
-		printf "\n"
-		read -ep "Manage ${bold}${info}${reset} :: enter a name > " ans
-		printf "\n"
-		
-		named="${ans}"
-		
-		case "${ans}" in
-			"")
-				printf "%s\n" "${info} :: enter a name please"
+	ans=( "${@}" )
+	named="${ans}"
+	
+	pushd "${work_dir}" &>/dev/null
+
+	case "${ans}" in
+		"")
+			aur_build_help
 				;;
-			@(download|info|msearch|search|update|install)) 
-				rc=1
-				break
-				;;
-			help)
-				manage_aur_build_help
-				;;
-			quit) 
-				exit
-				;;
-			*) manage_aur_is_array "${ans[@]}"
-				
-				
-				if (( ! "$?" )); then
-					for tidy_loop in ${named[@]}; do
-						printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
-						printf "\n"
-						for scheme in scheme_{get_pkgbuild,build};do 
-							"${scheme}" "${tidy_loop}"
-							if (( $? )); then
-								break
-							fi
-						done
-						printf "\n"
-					done
-				else
+		help)
+			aur_build_help
+			;;
+		*) 	aur_is_array "${ans[@]}"
+			if (( ! "$?" )); then
+				for tidy_loop in ${named[@]}; do
+					printf "%s\n" "${info} :: ${bold}${tidy_loop}${reset}"
+					printf "\n"
 					for scheme in scheme_{get_pkgbuild,build};do 
-						"${scheme}" "${named}"
+						"${scheme}" "${tidy_loop}"
 						if (( $? )); then
 							break
 						fi
 					done
-				fi
-				;;
-		esac
-	done
-	
-	if (( $rc )); then
-		manage_aur 0 "${ans}"
-	fi
+					printf "\n"
+				done
+			else
+				for scheme in scheme_{get_pkgbuild,build};do 
+					"${scheme}" "${named}"
+					if (( $? )); then
+						break
+					fi
+				done
+			fi
+			;;
+	esac
 	
 	popd &>/dev/null
 	
-	unset info named rc parse_ans ans_args ans tidy_loop work_dir scheme
+	unset named ans_args ans tidy_loop work_dir scheme
 }
 
-# ${1} first pass or not : 0 for not, 1 for yes
-# ${2} cower command or extra command e.g. install
 
-manage_aur(){
-	
-	if [[ ! -f "${COWER_CONFIG}" ]]; then
-		mkdir -p "$HOME/.config/cower"
-		cp "/usr/share/doc/cower/config" "$HOME/.config/cower/"
-		#out_info "A configuration file for cower need to be present at $HOME/.config/cower/"
-		#out_info "Please make a copy of /usr/share/doc/cower/config file at ${COWER_CONFIG}"
-		#die " Impossible to find the file ${COWER_CONFIG}"
-	else
-		source "${COWER_CONFIG}"
-	fi
-	
-	local cower_cmd _pass
-	_pass="${1}"
-	manage_cmd="${2}"
-	
-	if (( "${_pass}" )); then
-		printf "\n"
-		
-		read -ep "Manage :: please enter your command > " ans
-		manage_cmd="${ans}"
-	fi
-	
-	case $manage_cmd in
-			@(d|download))
-				manage_aur_download "download"
-				;;
-			@(i|info))
-				manage_aur_info "info"
-				;;
-			@(m|msearch))
-				manage_aur_msearch "msearch"
-				;;
-			@(s|search))
-				manage_aur_search "search"
-				;;
-			@(u|update))
-				manage_aur_update "update"
-				;;
-			@(in|install))
-				manage_aur_install "install"
-				;;
-			@(b|build))
-				manage_aur_build "build"
-				;;
-			quit)
-				exit
-				;;
-			*)
-				manage_aur_help
-				manage_aur 1
-				;;
-	esac
-}
-
-manage_aur_help(){
+aur_help(){
 	printf "\n"
 	printf "%-15s\n" "The following command are available" >&1
 	printf "\n"
@@ -761,13 +563,12 @@ manage_aur_help(){
 	printf "%-15s %-15s\n" "     update" "check for updates for a given packages" >&1
 	printf "%-15s %-15s\n" "     build" "build package(s)" >&1
 	printf "%-15s %-15s\n" "     install" "download,build,install package(s) in one pass" >&1
-	printf "%-15s %-15s\n" "     quit" "exit from the script" >&1
 	printf "\n"
 	printf "%-15s\n" "The first letter can be used e.g. d for download." >&1
 	printf "%-15s\n" "A special case exist for install, enter in." >&1
 }
 
-manage_aur_install_help(){
+aur_install_help(){
 	cat << EOF
 ${bold}Install a named package or a list of package.${reset}
 
@@ -783,15 +584,11 @@ ${bold}Install a named package or a list of package.${reset}
   If a dependency coming from AUR is detected, 
   the script run again the same scheme (download, build, install) for the dependency.
   This system is done recursively even for a list of package.
-  
-  You can switch to the main command entering his name e.g :
-     download #switch to the download command
-     build #switch to the build command
-     quit #to exit from the script
+
 EOF
 }
 
-manage_aur_build_help(){
+aur_build_help(){
 	cat << EOF
 ${bold}Build a named package or a list of package.${reset}
 
@@ -804,14 +601,10 @@ ${bold}Build a named package or a list of package.${reset}
   
   The script download the PKGBUILD then build the package.
   The AUR dependencies is not resolved.
-  
-  You can switch to the main command entering his name e.g :
-     download #switch to the download command
-     build #switch to the build command
-     quit #to exit from the script
+
 EOF
 }
-manage_aur_download_help(){
+aur_download_help(){
 	cat << EOF
 ${bold}Download the PKGBUILD for a named package or a list of package.${reset}
   
@@ -828,15 +621,11 @@ ${bold}Download the PKGBUILD for a named package or a list of package.${reset}
      retrovol clipit --- -f
      
   See man cower for more informations.
-  
-  You can switch to the main command entering his name e.g :
-     download #switch to the download command
-     build #switch to the build command
-     quit #to exit from the script
+
 EOF
 }
 
-manage_aur_info_help(){
+aur_info_help(){
 	cat << EOF
 ${bold}Get information for a named package or a list of package.${reset}
   
@@ -853,15 +642,11 @@ ${bold}Get information for a named package or a list of package.${reset}
      retrovol clipit --- --format=%D
      
   See man cower for more informations.
-  
-  You can switch to the main command entering his name e.g :
-     download #switch to the download command
-     build #switch to the build command
-     quit #to exit from the script
+
 EOF
 }
 
-manage_aur_search_help(){
+aur_search_help(){
 	cat << EOF
 ${bold}Search in AUR for a named package or a list of package.${reset}
   
@@ -878,15 +663,11 @@ ${bold}Search in AUR for a named package or a list of package.${reset}
      retrovol clipit --- --by=name
      
   See man cower for more informations.
-  
-  You can switch to the main command entering his name e.g :
-     download #switch to the download command
-     build #switch to the build command
-     quit #to exit from the script
+
 EOF
 }
 
-manage_aur_msearch_help(){
+aur_msearch_help(){
 	cat << EOF
 ${bold}Search for packages or a list of package maintained by a named maintainer.${reset}
   
@@ -903,15 +684,11 @@ ${bold}Search for packages or a list of package maintained by a named maintainer
      retrovol clipit --- --format=%a
      
   See man cower for more informations.
-  
-  You can switch to the main command entering his name e.g :
-     download #switch to the download command
-     build #switch to the build command
-     quit #to exit from the script
+
 EOF
 }
 
-manage_aur_update_help(){
+aur_update_help(){
 	cat << EOF
 ${bold}Check for update in AUR for a named package or a list of package.
 If you enter all as arguments, all installed packages will be updated on 
@@ -932,10 +709,6 @@ your system.${reset}
   See man cower for more informations.
   
   If you leave the name blank, the script check for all installed package coming from AUR.
-  
-  You can switch to the main command entering his name e.g :
-     download #switch to the download command
-     build #switch to the build command
-     quit #to exit from the script
+
 EOF
 }

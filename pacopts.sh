@@ -32,7 +32,7 @@ SP="---" # character to use to know if the commandline on manage_aur_* is a list
 usage(){
 	cat << EOF
 	
-${bold}Usage: ${0} <operation> [ target ]${reset}
+${bold}Usage: ${0} <operation> [ target ] [arguments]${reset}
 
 ${bold}options:${reset}
     
@@ -215,4 +215,82 @@ service(){
 	fi
 	
 	unset list_s6serv list_s6rcserv list_service list_search list_result
+}
+look_target(){
+	if [[ -z "${target}" ]]; then
+		out_error "target must not be empty"
+		out_error "try pacopts aur help command"
+		exit 1
+	fi
+}
+look_arguments(){
+	if [[ -z "${arguments}" ]]; then
+		out_error "arguments must not be empty"
+		out_error "try pacopts aur help command"
+		exit 1
+	fi
+}
+# ${1} want root or not,
+# 0 yes, 1 no
+look_root(){
+	local yes_no="${1}"
+	
+	if (( EUID == 0 ));then
+		if (( "${yes_no}" ));then
+			echo "This operation need to be run without root priviligies"
+			exit 1
+		fi
+	else
+		if ! (( "${yes_no}" ));then
+			echo "This operation need to be run with root priviligies"
+			exit 1
+		fi
+	fi
+	
+	unset yes_no
+}
+parse_aur(){
+	local tidy_loop
+	
+	look_root 1
+	look_target
+	if [[ "${target}" != "help" ]]; then
+		look_arguments
+	fi
+	
+	if [[ ! -f "${COWER_CONFIG}" ]]; then
+		mkdir -p "$HOME/.config/cower"
+		cp "/usr/share/doc/cower/config" "$HOME/.config/cower/"
+	else
+		source "${COWER_CONFIG}"
+	fi
+
+	case "${target}" in
+		@(d|download))
+			aur_download ${arguments[@]}
+			;;
+		@(i|info))
+			aur_info ${arguments[@]}
+			;;
+		@(m|msearch))
+			aur_msearch ${arguments[@]}
+			;;
+		@(s|search))
+			aur_search ${arguments[@]}
+			;;
+		@(u|update))
+			aur_update ${arguments[@]}
+			;;
+		@(in|install))
+			aur_install ${arguments[@]}
+			;;
+		@(b|build))
+			aur_build ${arguments[@]}
+			;;
+		*)
+			aur_help
+			;;
+	esac
+	
+	unset tidy_loop
 }
