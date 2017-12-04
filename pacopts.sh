@@ -1,4 +1,4 @@
-#!@BINDIR@/bash
+#!@BINDIR/bash
 # Copyright (c) 2015-2017 Eric Vidal <eric@obarun.org>
 # All rights reserved.
 # 
@@ -25,21 +25,21 @@ sourcing(){
 sourcing
 
 COWER_CONFIG="$HOME/.config/cower/config"
-SP="---" # character to use to know if the commandline on manage_aur_* is a list or not
+
 
 ## 		common functions
 
 usage(){
 	cat << EOF
 	
-${bold}Usage: ${0} <operation> [ target ] [arguments]${reset}
+${bold}Usage: ${0} <operation> [ target ] ${reset}
 
 ${bold}options:${reset}
     
     origin : check origin of target
     applysys : wrap up a sysusers file 
     applytmp : wrap up all tmpfiles
-    aur : manage package from AUR repositories
+    aur : handle package from AUR repositories
     service : check if a service exist for target
     
 ${bold}target for:${reset}
@@ -57,13 +57,24 @@ ${bold}target for:${reset}
         This option do not accept any target.
         
 	aur :
-        This option do not accept any target.
+		${0} aur <operations> [ target ] [ arguments ]
+        Operations can be : 
+			-d download
+			-i info
+			-s search
+			-m msearch
+			-u update
+			-U upgrade
+			-I install
+			-b build
+        Target is the name of a package(s).
+        Arguments is the option(s) for cower.
     
     service :
-		Name of the package(s).
-		If target is empty, all installed
-		packages will be checked.
-		Can be a list e.g. cups lvm2 dbus
+        Name of the package(s).
+        If target is empty, all installed
+        packages will be checked.
+        Can be a list e.g. cups lvm2 dbus
 EOF
 	exit 0
 }
@@ -249,48 +260,119 @@ look_root(){
 	
 	unset yes_no
 }
-parse_aur(){
-	local tidy_loop
+
+want_opt(){
+	local want="${1}" give="${2}" line
+	while read -n 1 line;do
+		if check_elements "${line}" "${give}"; then
+			return 0
+		fi
+	done <<< "${want}"
 	
+	unset want give line
+	
+	return 1
+}
+
+parse_opt(){
+	local opt pos=0
+	local -a str
+	str=( "${@}" )
+	str=( "${str[@]:1}" )
+	
+	opt="${1}"
+	
+	
+	for ((i=0;i<${#str[@]};i++));do
+		a_line=( ${str[i]} )
+		
+		for ((j=0;j<${#a_line[j]};j++));do
+	
+			pos=$j
+			
+			case ${a_line:j:1} in
+				-) ((pos++))
+					if [[ -z ${a_line:pos:1} ]]; then
+						return 1
+					elif [[ ${a_line:pos:1} == '-' ]]; then
+						((pos++))
+						
+						if [[ -z ${a_line:pos:2} ]]; then
+							return 1
+						else
+							rest_args[$i]="${a_line}"
+						fi
+						break
+					elif want_opt "${opt}" ${a_line:pos:1};then
+							opbind[$i]="${a_line:pos:1}"
+							break						
+					fi	
+					;;
+				*)	tget[$i]="${a_line}"
+					break
+					;;
+			esac
+		done
+	done
+	unset str pos opt optwrap
+}
+parse_aur(){
+	local opbind 
+	local -a tget rest_args
+
 	look_root 1
 	look_target
-	if [[ "${target}" != "help" ]]; then
-		look_arguments
-	fi
-	
+
 	if [[ ! -f "${COWER_CONFIG}" ]]; then
 		mkdir -p "$HOME/.config/cower"
 		cp "/usr/share/doc/cower/config" "$HOME/.config/cower/"
+		source "${COWER_CONFIG}"
 	else
 		source "${COWER_CONFIG}"
 	fi
 
-	case "${target}" in
-		@(d|download))
-			aur_download ${arguments[@]}
+	if ! parse_opt "dimscUuIbh" "${target_opts[@]}" || [[ -z "${opbind}" ]]; then
+		aur_help
+		exit 1
+	fi
+		
+	if [[ "${opbind}" != @(h|u|U) ]]; then
+		look_arguments
+	fi
+
+	case "${opbind}" in
+		d)	
+			aur_download 
 			;;
-		@(i|info))
-			aur_info ${arguments[@]}
+		i)
+			aur_info 
 			;;
-		@(m|msearch))
-			aur_msearch ${arguments[@]}
+		m)
+			aur_msearch 
 			;;
-		@(s|search))
-			aur_search ${arguments[@]}
+		s)
+			aur_search 
 			;;
-		@(u|update))
-			aur_update ${arguments[@]}
+		U)
+			aur_upgrade
 			;;
-		@(in|install))
-			aur_install ${arguments[@]}
+		u)
+			aur_update 
 			;;
-		@(b|build))
-			aur_build ${arguments[@]}
+		I)
+			aur_install 
+			;;
+		b)
+			aur_build 
+			;;
+		h)	aur_help
+			exit 0
 			;;
 		*)
 			aur_help
+			exit 1
 			;;
 	esac
 	
-	unset tidy_loop
+	unset opbind tget rest_args
 }
