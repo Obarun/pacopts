@@ -62,79 +62,64 @@ This 'operation' only return service(s) package which are not installed yet.
 'target' can be a list.
 	
 *aur*::
-
-	Maintain/install package(s) coming from AUR. This operation prompt
-	you an interactive menu where 'target' command can be info, search, 
-	msearch, download, update, build, install, quit (see below).
-	This operation *must be* run with normal user to avoid trouble on
-	your system when a package is builded. A file $HOME/.config/cower/config
-	*must exist* even it empty. This file can be a simple copy of
-	/usr/share/doc/cower/config cower configuration file.
+	Synopsis :
 +
-The 'target' can be called by the first letter of the command e.g. d
-for download. A special case exist for install, you need to enter in.
+'pacopts' aur <operations> [ target ] [ arguments ]
 +
-The interactive menu displayed look like this :
+Maintain/install package(s) coming from AUR. This operation *must be* 
+run with normal user to avoid trouble on your system when a package is
+builded. A file $HOME/.config/cower/config *must exist* even it empty.
+This file can be a simple copy of /usr/share/doc/cower/config cower
+configuration file. If the file doesn't exist, the script copy the
+sample coming from cower at $HOME/.config/cower/config.
 +
-	Manage info : : enter a name >
-+
-The bold word show you what command you are currently managing, in this
-case : info. You can switch between command at every time entering the
-desired command. The space between :: and > is used by pacopts to give/ask
-you some informations when is needed like overwrite or not a PKGBUILD. 
-+
-Every command can be apply for a single package or for a list of packages. 
-The script look forward a triple dash to define the list e.g :
-+		
-	Manage info : : enter a name > retrovol clipit ---
-+
-Without this regex only the first name is took. A whitespace need to be
-present before and after the triple dash.
-+
-The script accept any extra operation coming from cower (see man cower) 
-except for the command build and install e.g :
+The script accept any extra 'arguments' coming from cower (see man cower) 
+except for the command build, install and upgrade.However, to avoid
+conflicts between pacopts options and cower options, the long options
+*must be used* for cower. Short options for cower will not have any effects.
+e.g :
 +	
-	Manage info : : enter a name > retrovol --format=%D
-	Manage info : : enter a name > retrovol clipit --- --format=%D
+	pacopts aur -i retrovol --format=%D
+	pacopts aur -i retrovol clipit --format=%D
 +
-The cower operation help can be called under the command info, search, 
-msearch, download, update by entering '-h'.
+The cower 'arguments' help can be called under the command info, search, 
+msearch, download, update by entering --help.
 
-Aur Command
------------
-*info*::
+Aur Operations
+--------------
+*-i, info*::
 	
 	Show information about package(s).
 
-*search*::
+*-s, search*::
 	
 	Search package(s) in AUR repositories.
 
-*msearch*::
+*-m, msearch*::
 	
 	Search for package(s) maintained by a named maintainer. This is a 
 	synonym for searching with --by=maintainer.
 
-*download*::
+*-d, download*::
 	
 	Download the PKGBUILD of the package(s). The working directory where
 	the PKGBUILD is downloaded is set by the variable TargetDir at 
 	$HOME/.config/cower/config file. If this variable is empty, /tmp is 
 	picked by default.
 
-*update*::
+*-u, update*::
 	
-	Check packages for updates in the AUR. Without any 'arguments', all 
-	installed packages coming from AUR will be checked. With all as
-	'arguments', all installed packages coming from AUR will be updated
-	on your system, it means : downloaded, builded, installed. 
-	The dependencies is recursively checked. Examples :
-		
-		Manage update : : enter a name >
-		Manage update : : enter a name >all
-		Manage update : : enter a name >retrovol clipit ---
+	Check if a named package or a list of packages is/are out of date.
+	If you leave the 'target' blank, the script check for all installed 
+	package	on your system.
 
-*build*::
+*-U, upgrade*::
+
+	Download,build and install a named package or a list of packages if
+	the package(s) is out of date. If you leave the 'target' blank, 
+	the script do the same for all installed package on your system.
+
+*-b, build*::
 	
 	Download the PKGBUILD of the package(s) then build it. 
 	The AUR dependencies for the given package(s) is not checked. 
@@ -142,7 +127,7 @@ Aur Command
 	variable TargetDir at $HOME/.config/cower/config file. If this 
 	variable is empty, /tmp is picked by default.
 
-*install*::
+*-I, install*::
 	
 	Download, build and install the given package(s). If a dependency 
 	coming from AUR is detected, the script run again the same scheme 

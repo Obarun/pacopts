@@ -1,3 +1,11 @@
+Description
+===========
+
+Pacopts is a  utility script written in bash which helps you to find the 
+origin of the repositories for installed packages, to maintain the system
+automatically for somes repetitives operations by wrapping
+{sysusers,tmpfiles}.d coming from systemd and to maintain/manage AUR 
+packages using Cower software.
 
 License
 =======
