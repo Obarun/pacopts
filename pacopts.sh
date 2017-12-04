@@ -1,4 +1,4 @@
-#!@BINDIR/bash
+#!@BINDIR@/bash
 # Copyright (c) 2015-2017 Eric Vidal <eric@obarun.org>
 # All rights reserved.
 # 
