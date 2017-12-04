@@ -42,6 +42,7 @@ else
 	(( EUID == 0 )) || die " You must be run this script with root privilegies"
 fi
 
+
 cmd=( "${@}" )
 operation=( "${cmd[0]}" )
 target=( "${cmd[1]}" )
@@ -59,7 +60,7 @@ case "${operation}" in
 		/etc/s6/data/scripts/tmpfiles.sh --create
 		;;
 	aur)
-		manage_aur 0 "${target}"
+		parse_aur 
 		;;
 	service)
 		service "${target_opts[@]}"
