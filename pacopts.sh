@@ -56,17 +56,17 @@ ${bold}target for:${reset}
     applytmp :
         This option do not accept any target.
         
-	aur :
-		${0} aur <operations> [ target ] [ arguments ]
+    aur :
+        ${0} aur <operations> [ target ] [ arguments ]
         Operations can be : 
-			-d download
-			-i info
-			-s search
-			-m msearch
-			-u update
-			-U upgrade
-			-I install
-			-b build
+            -d download
+            -i info
+            -s search
+            -m msearch
+            -u update
+            -U upgrade
+            -I install
+            -b build
         Target is the name of a package(s).
         Arguments is the option(s) for cower.
     
