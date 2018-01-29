@@ -90,6 +90,11 @@ install_scheme(){
 					printf "%s\n" ":: ${bold}${named}${reset} already up to date"
 					printf "%s\n" ":: installed -> ${bold}${installed_version}${reset}, aur -> ${bold}${aur_version}${reset}"
 					printf "\n"
+					printf "%s" ":: do you still want to continue?[y|n] > "
+					reply_answer
+					if (( ! $? ));then
+						rc=1
+					fi
 				fi
 			else
 				rc=0
@@ -97,6 +102,11 @@ install_scheme(){
 				printf "%s\n" ":: ${bold}${named}${reset} already up to date"
 				printf "%s\n" ":: installed -> ${bold}${installed_version}${reset}, aur -> ${bold}${aur_version}${reset}"
 				printf "\n"
+				printf "%s" ":: do you still want to continue?[y|n] > "
+				reply_answer
+				if (( ! $? ));then
+					rc=1
+				fi
 			fi
 		else
 			rc=1	
