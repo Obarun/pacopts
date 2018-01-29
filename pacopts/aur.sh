@@ -460,19 +460,17 @@ aur_build(){
 
 aur_help(){
 	printf "\n"
-	printf "%-15s\n" "The following command are available" >&1
+	printf "%-15s\n" "The following options are available" >&1
 	printf "\n"
-	printf "%-15s %-15s\n" "     download" "download a pkgbuild for a given package" >&1
-	printf "%-15s %-15s\n" "     info" "get info for a given package" >&1
-	printf "%-15s %-15s\n" "     msearch" "search for packages maintained by a given name" >&1
-	printf "%-15s %-15s\n" "     search" "search for packages with a given name or regex pattern" >&1
-	printf "%-15s %-15s\n" "     update" "check if a given packages is out of date" >&1
-	printf "%-15s %-15s\n" "     upgrade" "upgrade a given packages" >&1
-	printf "%-15s %-15s\n" "     build" "build package(s)" >&1
-	printf "%-15s %-15s\n" "     install" "download,build,install package(s) in one pass" >&1
+	printf "%-15s %-15s\n" "     -d" "download a pkgbuild for a given package" >&1
+	printf "%-15s %-15s\n" "     -i" "get info for a given package" >&1
+	printf "%-15s %-15s\n" "     -m" "search for packages maintained by a given name" >&1
+	printf "%-15s %-15s\n" "     -s" "search for packages with a given name or regex pattern" >&1
+	printf "%-15s %-15s\n" "     -u" "check if a given packages is out of date" >&1
+	printf "%-15s %-15s\n" "     -U" "upgrade a given packages" >&1
+	printf "%-15s %-15s\n" "     -b" "build package(s)" >&1
+	printf "%-15s %-15s\n" "     -I" "download,build,install package(s) in one pass" >&1
 	printf "\n"
-	printf "%-15s\n" "The first letter can be used e.g. d for download." >&1
-	printf "%-15s\n" "A special case exist for install, enter in." >&1
 }
 
 aur_install_help(){
