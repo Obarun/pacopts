@@ -325,8 +325,12 @@ parse_aur(){
 
 	if [[ ! -f "${COWER_CONFIG}" ]]; then
 		mkdir -p "$HOME/.config/cower"
-		cp "/usr/share/doc/cower/config" "$HOME/.config/cower/"
-		source "${COWER_CONFIG}"
+		if [[ -f "/usr/share/doc/cower/config" ]];then
+			cp "/usr/share/doc/cower/config" "$HOME/.config/cower/"
+			source "${COWER_CONFIG}"
+		else
+			touch "$HOME/.config/cower/config"
+		fi
 	else
 		source "${COWER_CONFIG}"
 	fi
