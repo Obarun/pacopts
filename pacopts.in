@@ -51,7 +51,7 @@ arguments=( "${cmd[@]:2}" )
 
 case "${operation}" in
 	origin)
-		check_package "${target}"
+		check_package "${target}" "${arguments[@]}"
 		;;
 	applysys)
 		/usr/bin/applysys "${target_opts[@]}"
