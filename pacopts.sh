@@ -82,99 +82,78 @@ EOF
 ##			ORIGIN FUNCTIONS
 
 # ${1} name of the repos to use
+# ${2} package name
 find_origin(){
-	local repo_origin check ori ori_line ori_name tidy_loop
 	
-	repo_origin="${1}"
+	local r repo_ver local_ver
+	local -a p
 	
-	for check in ${!both[@]};do
-		
-		printf "\r${bold}::${reset} Check ${bold}%s${reset} package" "${both[$check]}"
+	r="${1}"
+	p="${@:1}"
+	
+	# syntax of -Ss output is 
+	# repo/name version (group) [installed]
+	# if the package doesn't come from the repo the syntax is
+	# repo/name version (group) [installed: version]
+	# if the package is not installed the syntax is
+	# repo/name version (group)
+	
+	for i in ${p[@]};do
+		printf "\r${bold}::${reset} Check ${bold}%s${reset} package" "${i}"
 		tput el #return to the last line
-		
-		while read ori; do
-			
-			ori_line=( ${ori} )
-			# syntax of ori_line is 
-			# repo/name version (group) [installed]
-			# if the package doesn't come from the repo the syntax is
-			# repo/name version (group) [installed: version]
-			# if the package is not installed the syntax is
-			# repo/name version (group)
-			
-			# ${#ori_line[@]} < 2 means field [installed] not present
-			# so the package is not installed
-			# skip it
-			if [[ ${#ori_line[@]} > 2 ]]; then
-				ori_name=${ori_line##*/}
-				ori_name=${ori_name%%' '*}
-				
-				# only enter on the next loop if package = package searched
-				# if not skip it.
-				if [[ "${ori_name}" == "${both[check]}" ]]; then
-					for ((tidy_loop=0;tidy_loop<${#ori_line[@]};tidy_loop++));do
-						if [[ "${ori_line[$tidy_loop]}" =~ ":" ]] && [[ "${tidy_loop}" != "1" ]]; then
-							if [[ "${both[$check]}" != obarun-@(mkiso|install|install-themes|build) ]]; then
-								printf "\r${bred}::${reset} package ${bold}%s${reset} do not come from ${bold}${repo}${reset} repository" "${both[$check]}"
-								printf "\n"
-								false+=("${both[$check]}")
-								# save cursor position
-								tput sc
-								break
-							fi
-						fi
-					done
+		repo_ver=$(expac -S "%v %r" $i | grep ${r} |awk -F"${r}" '{ print $1 }'|sed 's/ //g')
+		if (("${#repo_ver}"));then
+			local_ver=$(expac -Q %v $i|sed 's/ //g')
+			if (( "${#local_ver}" ));then
+				if ! awk 'BEGIN{if (ARGV[1] != ARGV[2]) { exit 1 } }' "${repo_ver}" "${local_ver}";then
+					false+=( "${i}" )
+					false+=( "${repo_ver}" )
+					false+=( "${local_ver}" )
 				fi
-				unset ori_line ori_name tidy_loop
 			fi
-		done < <(pacman -Ss "${both[$check]}" | grep "${repo_origin}")
+		fi
 	done
-	#return at the previous cursor position
-	tput rc
-	# erase the line
-	tput ed
+	printf "\n"
 	
-	unset repo_origin check ori ori_line ori_name tidy_loop
+	unset p r repo_ver local_repo
 }
 
 # ${1} name of the repos to use
-# if empty, obarun is set by default
+# ${@:2} name of the package
+# if repo is empty, obarun is set by default
+# if package is empty, all package are check
 check_package(){
 	
-	local named item repo tidy_loop
-	local -a both false repo_db
-	
+	local repo 
+	local -a false pack 
+		
 	# pick obarun by default
 	repo="${1:-obarun}"
-	
-	mapfile -t repo_db < <(pacman -Slq "${repo}")
-	
-	# FILTER : Compare list of $installed package and $repo database,
-	# if exist on twice put it on $both array
+	if [[ -z "${2}" ]];then
+		pack=( $(pacman -Slq ${repo}) )
+	else
+		pack="${@:2}"
+	fi
 		
-	while read named;do 
-		for item in ${repo_db[@]}; do #$(pacman -Slq obarun)
-			if  [[ "$named" == "$item" ]]; then 
-				both+=("$item")
-			fi
+	find_origin "${repo}" "${pack[@]}"
+	
+	if (( "${#false[@]}" )); then
+		out_notvalid "This following package(s) do not come from ${repo} repository"
+		for ((i=0;i<"${#false[@]}";i+=3 ));do
+			printf "\t%s\n" "${false[$i]}"
 		done
-	done < <(pacman -Qsq)
-	
-	#check origin of package
-	find_origin "${repo}"
-	
-	if (( "${#false}" )); then 
 		out_action "Do you want to replace this package(s)? [y|n]"
 		reply_answer
 		if (( ! $? )); then
-			for tidy_loop in "${false[@]}"; do
-				pacman -S "${repo}"/"${tidy_loop}"
+			for ((i=0;i<"${#false[@]}";i+=3 ));do
+				pacman -S "${repo}"/"${false[$i]}"
 			done
 		fi
 	fi
 	
-	unset named item repo both false repo_db tidy_loop
+	unset repo false pack
 }
+
 # ${1} list of service in fonction of the package name to find
 # can be empty
 service(){
