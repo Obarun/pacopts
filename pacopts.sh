@@ -89,7 +89,7 @@ find_origin(){
 	local -a p
 	
 	r="${1}"
-	p="${@:1}"
+	p="${@:2}"
 	
 	# syntax of -Ss output is 
 	# repo/name version (group) [installed]
