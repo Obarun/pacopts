@@ -7,7 +7,7 @@ pacopts - system maintainer helper
 
 Synopsis
 --------
-'pacopts' <operation> [ target ]
+'pacopts' <operation> [ target ] [ arguments ]
 
 Description
 -----------
@@ -15,21 +15,26 @@ Pacopts is a  utility script written in bash which helps you to find the
 origin of the repositories for installed packages, to maintain the system
 automatically for somes repetitives operations by wrapping
 {sysusers,tmpfiles}.d coming from systemd and to maintain/manage AUR 
-packages using Cower software.
+packages using Cower software. Also, It can help to find the associated 
+s6/s6-rc services package with your installed packages.  
 
 Operations
 ----------
 *origin*::
 
-	Check origin of all installed packages coming from a given 'target'
-	where 'target' can be all repositories set in pacman.conf. Pacman
-	queries versions of packages; not the origin of packages. For 
-	instance a identical package with the same version on different 
-	repositories, pacman won't know where the package came from. The 
-	version of packages, or a least the release, need to be different to
-	let pacman to find the good package. For example, if you build some 
-	package from abs and you don't change the version/release, pacman 
-	will not find the origin repository and obviously pacopts too.
+	Check origin of 'arguments' as package(s) coming from a given 'target'
+	where 'target' can be all repositories set in pacman.conf. If 'target'
+	is empty, obarun repository is took by default. If 'arguments' is
+	empty, all installed packages are checked from repositories set with
+	'target'. Also, 'arguments' can be list of packages.
++
+note : Pacman queries versions of packages; not the origin of packages.
+For instance pacman won't know the origin of a identical package with 
+the same  version on differents repositories. The version of packages, 
+or a least the release, need to be different to let pacman to find the 
+good package. For example, if you build a package from abs without 
+changing the version/release, pacman will not find the origin repository
+and obviously pacopts too.
 
 *applysys*::
 	
