@@ -1,5 +1,11 @@
 Changelog for pacopts
 
+In 0.1.6
+--------
+	
+	- Rewrite of function check_package and find_origin
+	- New feature : name of package can be specified with origin operation
+	
 In 0.1.5
 --------
 	
