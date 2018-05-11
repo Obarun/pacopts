@@ -32,11 +32,11 @@ COWER_CONFIG="$HOME/.config/cower/config"
 usage(){
 	cat << EOF
 	
-${bold}Usage: ${0} <operation> [ target ] ${reset}
+${bold}Usage: ${0} <operation> [ target ] [ arguments ] ${reset}
 
 ${bold}options:${reset}
     
-    origin : check origin of target
+    origin : check origin of arguments in target
     applysys : wrap up a sysusers file 
     applytmp : wrap up all tmpfiles
     aur : handle package from AUR repositories
@@ -45,9 +45,11 @@ ${bold}options:${reset}
 ${bold}target for:${reset}
     
     origin :
-        Name of the repo to check.
+        Name of the repo.
         If target is empty, obarun repo is
         picked by default.
+        Arguments is the name, or a list, of name 
+        of the package(s) to check.
 	
     applysys :
         Name of the file to parse.
